@@ -45,13 +45,13 @@ def classify_filename(filename: str) -> str | None:
 
 
 def scan_directory(dir_path: str) -> Pool:
-    """Scan a directory for pcap files and classify them."""
+    """Scan a directory recursively for pcap files and classify them."""
     pool = Pool()
     if not os.path.isdir(dir_path):
         return pool
 
     for ext in PCAP_EXTENSIONS:
-        for fpath in glob.glob(os.path.join(dir_path, f"*{ext}")):
+        for fpath in glob.glob(os.path.join(dir_path, "**", f"*{ext}"), recursive=True):
             fname = os.path.basename(fpath)
             category = classify_filename(fname)
             if category is None:

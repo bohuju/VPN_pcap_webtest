@@ -36,6 +36,7 @@ cache = LRUCache(max_size=256, ttl_seconds=3600)
 current_pool: Pool = Pool()
 all_parsed_packets: dict[str, list] = {"common": [], "proxy": [], "vpn": []}
 parsed_file_hashes: set[str] = set()
+_parsing_in_progress = False
 
 
 class PcapWatcher(FileSystemEventHandler):
@@ -54,26 +55,39 @@ observer: Optional[Observer] = None
 
 
 def rescan_pool():
-    global current_pool, all_parsed_packets, parsed_file_hashes
+    """Rescan all configured directories and rebuild the pool index (fast, no parsing)."""
+    global current_pool
     pools = []
     for d in PCAP_DIRS:
         if os.path.isdir(d):
             pools.append(scan_directory(d))
     if os.path.isdir(UPLOAD_DIR):
         pools.append(scan_directory(UPLOAD_DIR))
+    current_pool = merge_pools(pools)
 
-    new_pool = merge_pools(pools)
-    for entry in new_pool.all_entries():
-        fh = file_hash(entry.path)
-        if fh not in parsed_file_hashes:
-            try:
-                pkts = parse_pcap(entry.path)
-                all_parsed_packets[entry.category].extend(pkts)
-                parsed_file_hashes.add(fh)
-            except Exception as e:
-                print(f"WARNING: Failed to parse {entry.path}: {e}")
 
-    current_pool = new_pool
+def ensure_all_parsed():
+    """Parse any unparsed pcap files. Called lazily on first API request."""
+    global _parsing_in_progress
+    if _parsing_in_progress:
+        return
+    _parsing_in_progress = True
+    try:
+        pool_entries = current_pool.all_entries()
+        total = len(pool_entries)
+        for i, entry in enumerate(pool_entries):
+            fh = file_hash(entry.path)
+            if fh not in parsed_file_hashes:
+                try:
+                    pkts = parse_pcap(entry.path)
+                    all_parsed_packets[entry.category].extend(pkts)
+                    parsed_file_hashes.add(fh)
+                except Exception as e:
+                    print(f"WARNING: Failed to parse {entry.path}: {e}")
+            if i % 20 == 0:
+                print(f"Parsing progress: {i+1}/{total}")
+    finally:
+        _parsing_in_progress = False
 
 
 def compute_global_stats() -> GlobalStats:
@@ -134,6 +148,7 @@ async def health():
 
 @app.get("/api/stats")
 async def get_stats():
+    ensure_all_parsed()
     cached = cache.get("global_stats")
     if cached is not None:
         return cached
@@ -144,6 +159,7 @@ async def get_stats():
 
 @app.get("/api/analysis/protocol")
 async def get_protocol():
+    ensure_all_parsed()
     cached = cache.get("protocol")
     if cached is not None:
         return cached
@@ -154,6 +170,7 @@ async def get_protocol():
 
 @app.get("/api/analysis/packet-size")
 async def get_packet_size():
+    ensure_all_parsed()
     cached = cache.get("packet_size")
     if cached is not None:
         return cached
@@ -164,6 +181,7 @@ async def get_packet_size():
 
 @app.get("/api/analysis/flow")
 async def get_flow():
+    ensure_all_parsed()
     cached = cache.get("flow")
     if cached is not None:
         return cached
@@ -174,6 +192,7 @@ async def get_flow():
 
 @app.get("/api/analysis/time-series")
 async def get_time_series():
+    ensure_all_parsed()
     cached = cache.get("time_series")
     if cached is not None:
         return cached
@@ -184,6 +203,7 @@ async def get_time_series():
 
 @app.get("/api/analysis/tls")
 async def get_tls():
+    ensure_all_parsed()
     cached = cache.get("tls")
     if cached is not None:
         return cached
@@ -198,6 +218,7 @@ async def get_packets(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=500),
 ):
+    ensure_all_parsed()
     records, total = paginate_packets(all_parsed_packets, type, page, size)
     return PacketTableData(
         packets=[r.model_dump() for r in records],
