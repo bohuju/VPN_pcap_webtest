@@ -9,7 +9,7 @@ interface StatsContextValue {
   refresh: () => void;
 }
 
-const StatsContext = createContext<StatsContextValue>({
+export const StatsContext = createContext<StatsContextValue>({
   stats: null,
   isLoading: true,
   error: null,
