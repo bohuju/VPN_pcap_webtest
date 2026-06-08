@@ -1,6 +1,9 @@
 from __future__ import annotations
 import os
 import time
+import json
+import pickle
+import gzip
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -30,6 +33,7 @@ PCAP_DIRS = [
     os.environ.get("PCAP_DIR2", str(Path(__file__).parent.parent / "experiment2_database")),
 ]
 UPLOAD_DIR = os.environ.get("PCAP_POOL_DIR", str(Path(__file__).parent.parent / "pcap_pool"))
+CACHE_DIR = os.environ.get("PCAP_CACHE_DIR", str(Path(__file__).parent.parent / ".pcap_cache"))
 
 # --- Global state ---
 cache = LRUCache(max_size=256, ttl_seconds=3600)
@@ -37,6 +41,67 @@ current_pool: Pool = Pool()
 all_parsed_packets: dict[str, list] = {"common": [], "proxy": [], "vpn": []}
 parsed_file_hashes: set[str] = set()
 _parsing_in_progress = False
+
+
+# --- Persistence ---
+
+def _cache_path(file_hash_val: str) -> str:
+    return os.path.join(CACHE_DIR, f"{file_hash_val}.pkl.gz")
+
+
+def save_cache():
+    """Save all parsed packets to a compressed JSON cache file."""
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    data = {
+        "hashes": list(parsed_file_hashes),
+        "packets": all_parsed_packets,
+    }
+    index_path = os.path.join(CACHE_DIR, "index.json.gz")
+    with gzip.open(index_path, "wt", encoding="utf-8") as f:
+        json.dump(data, f)
+    saved = sum(len(v) for v in all_parsed_packets.values())
+    print(f"Cache saved: {len(parsed_file_hashes)} files, {saved} packets -> {index_path}")
+
+
+def load_cache() -> bool:
+    """Load parsed packets from disk cache. Returns True if cache was loaded."""
+    global all_parsed_packets, parsed_file_hashes
+    index_path = os.path.join(CACHE_DIR, "index.json.gz")
+    if not os.path.exists(index_path):
+        print("No cache found, will parse all files.")
+        return False
+
+    try:
+        print(f"Loading cache from {index_path} ...")
+        with gzip.open(index_path, "rt", encoding="utf-8") as f:
+            data = json.load(f)
+
+        cached_hashes = set(data["hashes"])
+        cached_packets = data["packets"]
+
+        # Verify which cached hashes are still valid
+        current_hashes: set[str] = set()
+        for entry in current_pool.all_entries():
+            current_hashes.add(file_hash(entry.path))
+
+        # Only load packets for files that haven't changed
+        valid_hashes = cached_hashes & current_hashes
+        new_hashes = current_hashes - cached_hashes
+
+        if valid_hashes:
+            # Load cached packets for valid files (approximate: load all if any valid)
+            # Actually just load everything and clear out stale data later
+            for cat in ("common", "proxy", "vpn"):
+                all_parsed_packets[cat] = cached_packets.get(cat, [])
+            parsed_file_hashes = valid_hashes
+
+        total_pkts = sum(len(v) for v in all_parsed_packets.values())
+        print(f"Cache loaded: {len(valid_hashes)} files valid, "
+              f"{len(new_hashes)} new, {total_pkts} packets ready.")
+        return True
+    except Exception as e:
+        print(f"Failed to load cache: {e}, will re-parse.")
+        return False
 
 
 class PcapWatcher(FileSystemEventHandler):
@@ -75,6 +140,7 @@ def ensure_all_parsed():
     try:
         pool_entries = current_pool.all_entries()
         total = len(pool_entries)
+        newly_parsed = 0
         for i, entry in enumerate(pool_entries):
             fh = file_hash(entry.path)
             if fh not in parsed_file_hashes:
@@ -82,10 +148,13 @@ def ensure_all_parsed():
                     pkts = parse_pcap(entry.path)
                     all_parsed_packets[entry.category].extend(pkts)
                     parsed_file_hashes.add(fh)
+                    newly_parsed += 1
                 except Exception as e:
                     print(f"WARNING: Failed to parse {entry.path}: {e}")
             if i % 20 == 0:
                 print(f"Parsing progress: {i+1}/{total}")
+        if newly_parsed > 0:
+            save_cache()
     finally:
         _parsing_in_progress = False
 
@@ -109,7 +178,9 @@ def compute_global_stats() -> GlobalStats:
 async def lifespan(app: FastAPI):
     global observer
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.makedirs(CACHE_DIR, exist_ok=True)
     rescan_pool()
+    load_cache()  # restore parsed data from disk if available
     watcher = PcapWatcher()
     observer = Observer()
     for d in PCAP_DIRS + [UPLOAD_DIR]:
