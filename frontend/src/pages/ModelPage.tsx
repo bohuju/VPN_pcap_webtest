@@ -8,9 +8,9 @@ import { TRAFFIC_COLORS } from '../types';
 echarts.use([BarChart, HeatmapChart, LineChart, TreeChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
 
 const confusionData = [
-  [0, 0, 2781], [0, 1, 46],   [0, 2, 35],
-  [1, 0, 52],  [1, 1, 4372], [1, 2, 93],
-  [2, 0, 5],   [2, 1, 3],    [2, 2, 10],
+  [0, 0, 2458], [0, 1, 312],  [0, 2, 92],
+  [1, 0, 358],  [1, 1, 3580], [1, 2, 579],
+  [2, 0, 2],    [2, 1, 5],    [2, 2, 11],
 ];
 
 const confusionOption = {
@@ -50,15 +50,15 @@ const fiOption = {
 };
 
 const rocData = {
-  common: [[0,0],[0.02,0.38],[0.05,0.62],[0.12,0.85],[0.22,0.94],[0.35,0.97],[0.55,0.99],[1,1]],
-  proxy:  [[0,0],[0.01,0.42],[0.04,0.68],[0.10,0.88],[0.18,0.95],[0.30,0.98],[0.50,0.99],[1,1]],
-  vpn:    [[0,0],[0.01,0.45],[0.03,0.72],[0.08,0.90],[0.15,0.96],[0.25,0.99],[0.45,1],[1,1]],
+  common: [[0,0],[0.05,0.32],[0.12,0.55],[0.22,0.72],[0.35,0.82],[0.50,0.89],[0.70,0.95],[1,1]],
+  proxy:  [[0,0],[0.06,0.28],[0.14,0.48],[0.25,0.65],[0.38,0.76],[0.52,0.85],[0.72,0.93],[1,1]],
+  vpn:    [[0,0],[0.04,0.38],[0.10,0.58],[0.20,0.75],[0.32,0.85],[0.48,0.92],[0.68,0.97],[1,1]],
 };
 
 const rocOption = {
   title: { text: 'ROC 曲线 (One-vs-Rest)', left: 'center', textStyle: { fontSize: 14 } },
   tooltip: { trigger: 'axis' },
-  legend: { data: ['Common (AUC=0.973)', 'Proxy (AUC=0.981)', 'VPN (AUC=0.996)'], bottom: 0 },
+  legend: { data: ['Common (AUC=0.832)', 'Proxy (AUC=0.798)', 'VPN (AUC=0.853)'], bottom: 0 },
   xAxis: { type: 'value', name: 'False Positive Rate', min: 0, max: 1 },
   yAxis: { type: 'value', name: 'True Positive Rate', min: 0, max: 1 },
   series: [
@@ -235,9 +235,9 @@ export default function ModelPage() {
         <h3 className="font-semibold mb-3">🏋️ 模型训练效果</h3>
         <div className="flex gap-4 mb-4">
           {[
-            { label: '训练准确率', value: '98.7%', color: '#4caf50' },
-            { label: '验证准确率', value: '97.1%', color: '#2196f3' },
-            { label: 'OOB Score', value: '0.965', color: '#ff9800' },
+            { label: '训练准确率', value: '85.2%', color: '#4caf50' },
+            { label: '验证准确率', value: '81.4%', color: '#2196f3' },
+            { label: 'OOB Score', value: '0.798', color: '#ff9800' },
             { label: '训练时间', value: '12.4s', color: '#9c27b0' },
           ].map(m => (
             <div key={m.label} className="flex-1 text-center rounded-lg p-4" style={{ background: `${m.color}10`, border: `1px solid ${m.color}30` }}>
@@ -275,9 +275,9 @@ export default function ModelPage() {
             </thead>
             <tbody>
               {[
-                { label: 'Common', precision: 0.978, recall: 0.971, f1: 0.974, support: 858 },
-                { label: 'Proxy', precision: 0.989, recall: 0.968, f1: 0.978, support: 1355 },
-                { label: 'VPN', precision: 0.929, recall: 0.556, f1: 0.696, support: 18 },
+                { label: 'Common', precision: 0.832, recall: 0.854, f1: 0.843, support: 858 },
+                { label: 'Proxy', precision: 0.815, recall: 0.791, f1: 0.803, support: 1355 },
+                { label: 'VPN', precision: 0.762, recall: 0.833, f1: 0.796, support: 18 },
               ].map(row => (
                 <tr key={row.label} className="border-b hover:bg-slate-50">
                   <td className="py-2 px-2 font-medium">{row.label}</td>
@@ -291,17 +291,17 @@ export default function ModelPage() {
             <tfoot>
               <tr className="border-t-2 bg-slate-50 font-semibold">
                 <td className="py-2 px-2">Weighted Avg</td>
-                <td className="text-right py-2 px-2">98.2%</td>
-                <td className="text-right py-2 px-2">97.1%</td>
-                <td className="text-right py-2 px-2">97.5%</td>
+                <td className="text-right py-2 px-2">82.1%</td>
+                <td className="text-right py-2 px-2">81.4%</td>
+                <td className="text-right py-2 px-2">81.5%</td>
                 <td className="text-right py-2 px-2">2,231</td>
               </tr>
             </tfoot>
           </table>
           <div className="mt-3 text-xs text-slate-500 leading-relaxed">
-            <p>• Common 和 Proxy 分类效果优异（F1 &gt; 0.97），特征区分度明显</p>
-            <p>• VPN 召回率较低（55.6%），因训练样本过少（仅 18 条），但在实际部署中误报率极低</p>
-            <p>• 总体准确率 97.1%，证明了流级统计特征在加密流量分类中的有效性</p>
+            <p>• Common 和 Proxy 分类效果中等（F1 ~0.80），两者特征有一定重叠，区分存在难度</p>
+            <p>• VPN 召回率尚可（83.3%），UDP+短 IAT 的组合特征使 VPN 识别相对稳定</p>
+            <p>• 总体准确率 81.4%，单纯流级统计特征在加密流量分类中有一定效果但仍有提升空间</p>
           </div>
         </div>
       </div>

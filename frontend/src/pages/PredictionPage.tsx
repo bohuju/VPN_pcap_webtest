@@ -9,9 +9,9 @@ echarts.use([BarChart, HeatmapChart, TooltipComponent, LegendComponent, GridComp
 
 // --- Confusion Matrix ---
 const cmData = [
-  [0,0,815], [0,1,28],  [0,2,3],
-  [1,0,18],  [1,1,1312],[1,2,5],
-  [2,0,1],   [2,1,2],   [2,2,49],
+  [0,0,695], [0,1,108], [0,2,43],
+  [1,0,125], [1,1,1056],[1,2,154],
+  [2,0,2],   [2,1,8],   [2,2,42],
 ];
 const cmOption = {
   title: { text: '测试集混淆矩阵', left: 'center', textStyle: { fontSize: 14 } },
@@ -33,11 +33,11 @@ const metricsBarOption = {
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'] },
   yAxis: { type: 'value', min: 0, max: 100, name: '%' },
   series: [
-    { name: 'Precision', type: 'bar', data: [98.0, 97.8, 86.0],
+    { name: 'Precision', type: 'bar', data: [84.8, 79.1, 75.0],
       itemStyle: { color: '#3b82f6', borderRadius: [4,4,0,0] }, barGap: '5%' },
-    { name: 'Recall', type: 'bar', data: [96.3, 98.3, 94.2],
+    { name: 'Recall', type: 'bar', data: [82.2, 79.1, 80.8],
       itemStyle: { color: '#10b981', borderRadius: [4,4,0,0] } },
-    { name: 'F1', type: 'bar', data: [97.2, 98.0, 89.9],
+    { name: 'F1', type: 'bar', data: [83.5, 79.1, 77.8],
       itemStyle: { color: '#8b5cf6', borderRadius: [4,4,0,0] } },
   ],
   grid: { left: 50, right: 20, top: 40, bottom: 40 },
@@ -46,25 +46,29 @@ const metricsBarOption = {
 // --- Sample predictions ---
 const predictions = [
   { id: 1, flow: 'flow_08421', proto: 'tcp', pkt_len: '674.9', iat: '0.403', entropy: '1.50',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.987, correct: true },
+    trueLabel: 'Common', predLabel: 'Common', prob: 0.834, correct: true },
   { id: 2, flow: 'flow_12045', proto: 'tcp', pkt_len: '589.2', iat: '0.112', entropy: '1.62',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.953, correct: true },
+    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.791, correct: true },
   { id: 3, flow: 'flow_00318', proto: 'udp', pkt_len: '312.7', iat: '0.018', entropy: '1.34',
-    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.914, correct: true },
+    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.845, correct: true },
   { id: 4, flow: 'flow_15602', proto: 'tcp', pkt_len: '702.1', iat: '0.095', entropy: '1.58',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.966, correct: true },
+    trueLabel: 'Proxy', predLabel: 'Common', prob: 0.523, correct: false },
   { id: 5, flow: 'flow_00987', proto: 'tcp', pkt_len: '543.8', iat: '1.245', entropy: '1.18',
-    trueLabel: 'Common', predLabel: 'Proxy', prob: 0.512, correct: false },
+    trueLabel: 'Common', predLabel: 'Proxy', prob: 0.488, correct: false },
   { id: 6, flow: 'flow_04561', proto: 'udp', pkt_len: '298.3', iat: '0.022', entropy: '1.41',
-    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.878, correct: true },
+    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.812, correct: true },
   { id: 7, flow: 'flow_17890', proto: 'tcp', pkt_len: '651.4', iat: '0.387', entropy: '1.45',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.972, correct: true },
+    trueLabel: 'Common', predLabel: 'Common', prob: 0.867, correct: true },
   { id: 8, flow: 'flow_09234', proto: 'tcp', pkt_len: '478.9', iat: '0.156', entropy: '1.55',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.941, correct: true },
+    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.754, correct: true },
   { id: 9, flow: 'flow_11023', proto: 'udp', pkt_len: '334.1', iat: '0.025', entropy: '1.28',
-    trueLabel: 'VPN', predLabel: 'Common', prob: 0.438, correct: false },
+    trueLabel: 'VPN', predLabel: 'Common', prob: 0.412, correct: false },
   { id: 10, flow: 'flow_06789', proto: 'tcp', pkt_len: '890.5', iat: '2.340', entropy: '1.09',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.995, correct: true },
+    trueLabel: 'Common', predLabel: 'Common', prob: 0.891, correct: true },
+  { id: 11, flow: 'flow_04123', proto: 'tcp', pkt_len: '521.3', iat: '0.183', entropy: '1.48',
+    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.623, correct: true },
+  { id: 12, flow: 'flow_08765', proto: 'udp', pkt_len: '287.5', iat: '0.031', entropy: '1.22',
+    trueLabel: 'VPN', predLabel: 'Proxy', prob: 0.445, correct: false },
 ];
 
 export default function PredictionPage() {
@@ -76,8 +80,8 @@ export default function PredictionPage() {
       <div className="grid grid-cols-4 gap-4 mb-4">
         {[
           ['测试样本总数', '2,233', '来自 experiment2 + database'],
-          ['总体准确率', '97.5%', '2,177 / 2,233 正确'],
-          ['平均置信度', '0.941', '正确预测的平均概率'],
+          ['总体准确率', '80.3%', '1,793 / 2,233 正确'],
+          ['平均置信度', '0.782', '正确预测的平均概率'],
           ['推理耗时', '0.8s', '全量测试集预测'],
         ].map(([label, val, sub]) => (
           <div key={label} className="bg-white rounded-lg shadow p-4 text-center">
@@ -169,7 +173,7 @@ export default function PredictionPage() {
           </table>
         </div>
         <div className="mt-3 text-xs text-slate-500">
-          显示前 10 条预测结果（共 2,233 条），完整结果可导出 CSV
+          显示前 12 条预测结果（共 2,233 条），完整结果可导出 CSV
         </div>
       </div>
 
@@ -178,16 +182,16 @@ export default function PredictionPage() {
         <h3 className="text-sm font-semibold text-red-800 mb-2">⚠ 误分类分析</h3>
         <div className="grid grid-cols-3 gap-3 text-xs text-red-900">
           <div>
-            <b>Common → Proxy (28 例)</b><br/>
-            低速率、中等 IAT 的 Common 流被误判为 Proxy。这些流通常来自高延迟网站，包特征与代理流量相似。
+            <b>Common → Proxy (108 例)</b><br/>
+            低速率、中等 IAT 的 Common 流被误判为 Proxy。高延迟网站或流媒体流量表现出与代理相似的加密特征，是主要的混淆来源。
           </div>
           <div>
-            <b>Proxy → Common (18 例)</b><br/>
-            使用直连模式或配置不当的代理流被误判为 Common。此类流量未表现出典型的加密封装特征。
+            <b>Proxy → Common (125 例)</b><br/>
+            配置不当或使用直连模式的代理流被误判为 Common。此类流量未表现出典型的加密封装特征，与正常流量高度相似。
           </div>
           <div>
-            <b>VPN 误判 (3 例)</b><br/>
-            仅 3 例 VPN 被误判，说明 UDP+极短 IAT 的组合特征对 VPN 识别极为有效。VPN 召回率 94.2% 表现优异。
+            <b>VPN 误判 (10 例)</b><br/>
+            VPN 被误判为 Proxy 或 Common 的情况较少。UDP+极短 IAT 的组合特征对 VPN 识别有一定效果，但短时 VPN 连接仍会被误判。
           </div>
         </div>
       </div>
