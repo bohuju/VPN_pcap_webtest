@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import InsightCard from '../components/InsightCard';
 import { usePacketTable } from '../hooks/useAnalysis';
 import { TRAFFIC_TYPES, TRAFFIC_LABELS } from '../types';
 
@@ -12,6 +13,11 @@ export default function DataTablePage() {
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">📋 详细数据表</h2>
+      <InsightCard items={[
+        { label: 'Common', content: '数据量最多（2,882 流），覆盖 20 个网站的正常访问流量。IP 地址直接对应目标服务器。' },
+        { label: 'Proxy', content: '流数量最大（4,537 流），包含 SSR/VMess/Trojan/SS 四种代理类型。源 IP 多为代理服务器地址。' },
+        { label: 'VPN', content: '样本量最少（38 流），但单流包密度最高。所有 IP 均为 VPN 隧道内网地址（10.8.x.x），外部不可见真实通信端点。' },
+      ]} />
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b flex items-center gap-4">
           <span className="text-sm text-slate-500">类别:</span>

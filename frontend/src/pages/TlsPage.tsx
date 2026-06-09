@@ -3,6 +3,7 @@ import * as echarts from 'echarts/core';
 import { PieChart } from 'echarts/charts';
 import { TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
+import InsightCard from '../components/InsightCard';
 import { useTlsData } from '../hooks/useAnalysis';
 import { TRAFFIC_COLORS, TRAFFIC_TYPES, TRAFFIC_LABELS } from '../types';
 
@@ -39,6 +40,11 @@ export default function TlsPage() {
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">🔐 TLS 特征</h2>
+      <InsightCard items={[
+        { label: 'Common', content: 'HTTPS 流量占主导，可提取 SNI、证书链、JA3 指纹等丰富特征用于应用识别。TLS 握手模式正常。' },
+        { label: 'Proxy', content: 'TLS 流量经代理二次封装，外部仍可见 TLS 记录但 SNI 可能指向代理服务器而非真实目标。JA3 指纹受代理实现影响。' },
+        { label: 'VPN', content: '几乎无直接 TLS 流量——所有应用层数据（包括 TLS）被 VPN 隧道完全封装在 UDP 载荷中，外部仅见加密隧道。' },
+      ]} />
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <ReactEChartsCore echarts={echarts} option={option} style={{ height: 360 }} />
       </div>

@@ -265,10 +265,9 @@ echo ""
 # Summary
 # ============================================================
 echo -e "${BOLD}${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${WHITE}║${NC}  ${BOLD}${GREEN}✦ 演示系统启动完成 ✦${NC}                                          ${WHITE}║${NC}"
+echo -e "${WHITE}║${NC}  ${BOLD}${GREEN}✦ 数据处理完成 ✦${NC}                                          ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}                                                                  ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}  ${CYAN}🌐${NC}  Web 面板:  ${BOLD}${BLUE}http://localhost:${BACKEND_PORT}${NC}                         ${WHITE}║${NC}"
-echo -e "${WHITE}║${NC}  ${CYAN}📊${NC}  数据来源:  experiment2 + experiment2_database                 ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}  ${CYAN}📈${NC}  分析维度:  概览 / 协议 / 包大小 / 流 / 时间序列 / TLS / 数据表    ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}  ${CYAN}🟢🟠🔴${NC}  三类对比:  Common / Proxy / VPN                               ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}                                                                  ${WHITE}║${NC}"
