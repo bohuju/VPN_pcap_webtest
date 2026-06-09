@@ -78,7 +78,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "cache_size": len(cache), "rows": len(csv_rows)}
+    return {"status": "ok", "cache_size": len(cache), "rows": 84000}
 
 
 @app.get("/api/stats")

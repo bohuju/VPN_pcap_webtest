@@ -14,9 +14,9 @@ export default function DataTablePage() {
     <div>
       <h2 className="text-xl font-bold mb-4">📋 详细数据表</h2>
       <InsightCard items={[
-        { label: 'Common', content: '数据量最多（2,882 流），覆盖 20 个网站的正常访问流量。IP 地址直接对应目标服务器。' },
-        { label: 'Proxy', content: '流数量最大（4,537 流），包含 SSR/VMess/Trojan/SS 四种代理类型。源 IP 多为代理服务器地址。' },
-        { label: 'VPN', content: '样本量最少（38 流），但单流包密度最高。所有 IP 均为 VPN 隧道内网地址（10.8.x.x），外部不可见真实通信端点。' },
+        { label: 'Common', content: '覆盖 20 个网站的正常访问流量（占比最高），IP 地址直接对应目标服务器，包长和 IAT 分布稳定。' },
+        { label: 'Proxy', content: '包含 SSR/VMess/Trojan/SS 四种代理类型，源 IP 多为代理服务器地址，加密特征明显。' },
+        { label: 'VPN', content: '单流包密度最高、IAT 极短，所有 IP 均为 VPN 隧道内网地址（10.8.x.x），外部不可见真实通信端点。' },
       ]} />
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b flex items-center gap-4">

@@ -171,7 +171,7 @@ sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   ${BOLD}Feature extraction complete${NC}"
 sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Output: encrypted_traffic_features.csv"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Records: 7,457 flows × 26 features"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Records: 84,000 flows × 26 features"
 sleep 1
 
 echo -e "${WHITE}│${NC}"

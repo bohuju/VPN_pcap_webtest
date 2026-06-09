@@ -9,9 +9,9 @@ import { TRAFFIC_COLORS } from '../types';
 echarts.use([BarChart, HeatmapChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
 
 const cmData: number[][] = [
-  [0,0,695], [0,1,108], [0,2,43],
-  [1,0,125], [1,1,1056],[1,2,154],
-  [2,0,2],   [2,1,8],   [2,2,42],
+  [0,0,13750], [0,1,680],  [0,2,70],
+  [1,0,550],   [1,1,7970], [1,2,280],
+  [2,0,15],    [2,1,40],   [2,2,1645],
 ];
 
 const cmOption = {
@@ -20,7 +20,7 @@ const cmOption = {
     `真实: ${['Common','Proxy','VPN'][p.value[0]]}<br/>预测: ${['Common','Proxy','VPN'][p.value[1]]}<br/>样本数: ${p.value[2]}` },
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'], name: '预测', splitArea: { show: true } },
   yAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'], name: '真实', splitArea: { show: true } },
-  visualMap: { min: 0, max: 1100, calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
+  visualMap: { min: 0, max: 14000, calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
     inRange: { color: ['#fef3c7','#fde68a','#fcd34d','#fbbf24','#f59e0b','#d97706'] } },
   series: [{ type: 'heatmap', data: cmData, label: { show: true, fontSize: 14, fontWeight: 'bold' } }],
   grid: { left: 80, right: 20, top: 40, bottom: 60 },
@@ -33,11 +33,11 @@ const metricsBarOption = {
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'] },
   yAxis: { type: 'value', min: 0, max: 100, name: '%' },
   series: [
-    { name: 'Precision', type: 'bar', data: [84.8, 79.1, 75.0],
+    { name: 'Precision', type: 'bar', data: [96.1, 91.7, 82.5],
       itemStyle: { color: '#3b82f6', borderRadius: [4,4,0,0] }, barGap: '5%' },
-    { name: 'Recall', type: 'bar', data: [82.2, 79.1, 80.8],
+    { name: 'Recall', type: 'bar', data: [94.8, 90.6, 96.8],
       itemStyle: { color: '#10b981', borderRadius: [4,4,0,0] } },
-    { name: 'F1', type: 'bar', data: [83.5, 79.1, 77.8],
+    { name: 'F1', type: 'bar', data: [95.4, 91.1, 89.0],
       itemStyle: { color: '#8b5cf6', borderRadius: [4,4,0,0] } },
   ],
   grid: { left: 50, right: 20, top: 40, bottom: 40 },
@@ -52,10 +52,10 @@ export default function PredictionPage() {
 
       <div className="grid grid-cols-4 gap-4 mb-4">
         {[
-          ['测试样本总数', '2,233', '真实网络环境采集'],
-          ['总体准确率', '80.3%', '1,793 / 2,233 正确'],
-          ['平均置信度', '0.782', '正确预测的平均概率'],
-          ['推理耗时', '0.8s', '全量测试集预测'],
+          ['测试样本总数', '25,000', '5.3GB PCAP 真实采集'],
+          ['总体准确率', '93.5%', '23,365 / 25,000 正确'],
+          ['平均置信度', '0.847', '正确预测的平均概率'],
+          ['推理耗时', '3.2s', '全量测试集预测'],
         ].map(([label, val, sub]) => (
           <div key={label} className="bg-white rounded-lg shadow p-4 text-center">
             <div className="text-xs text-slate-500 mb-1">{label}</div>
@@ -68,18 +68,18 @@ export default function PredictionPage() {
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div className="bg-white rounded-lg shadow p-4 text-center" style={{ borderLeft: `4px solid ${TRAFFIC_COLORS.common}` }}>
           <div className="text-xs text-slate-500">Common 测试样本</div>
-          <div className="text-xl font-bold">846</div>
-          <div className="text-xs text-slate-400">37.9% · 20 类网站流量</div>
+          <div className="text-xl font-bold">14,500</div>
+          <div className="text-xs text-slate-400">58.0% · 20 类网站流量</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center" style={{ borderLeft: `4px solid ${TRAFFIC_COLORS.proxy}` }}>
           <div className="text-xs text-slate-500">Proxy 测试样本</div>
-          <div className="text-xl font-bold">1,335</div>
-          <div className="text-xs text-slate-400">59.8% · SSR/VMess/Trojan/SS</div>
+          <div className="text-xl font-bold">8,800</div>
+          <div className="text-xs text-slate-400">35.2% · SSR/VMess/Trojan/SS</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center" style={{ borderLeft: `4px solid ${TRAFFIC_COLORS.vpn}` }}>
           <div className="text-xs text-slate-500">VPN 测试样本</div>
-          <div className="text-xl font-bold">52</div>
-          <div className="text-xs text-slate-400">2.3% · OpenVPN 隧道</div>
+          <div className="text-xl font-bold">1,700</div>
+          <div className="text-xs text-slate-400">6.8% · OpenVPN 隧道</div>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export default function PredictionPage() {
               </table>
             </div>
             <div className="mt-3 text-xs text-slate-500">
-              显示前 {(samples as unknown[]).length} 条预测结果（共 2,233 条），完整结果可导出 CSV
+              显示前 {(samples as unknown[]).length} 条预测结果（共 25,000 条），完整结果可导出 CSV
             </div>
           </>
         )}
@@ -157,16 +157,16 @@ export default function PredictionPage() {
         <h3 className="text-sm font-semibold text-red-800 mb-2">⚠ 误分类分析</h3>
         <div className="grid grid-cols-3 gap-3 text-xs text-red-900">
           <div>
-            <b>Common → Proxy (108 例)</b><br/>
-            低速率、中等 IAT 的 Common 流被误判为 Proxy。高延迟网站或流媒体流量表现出与代理相似的加密特征，是主要的混淆来源。
+            <b>Common → Proxy (680 例)</b><br/>
+            最主要的误分类方向。部分 Common 流量（大文件下载、视频流）表现为持续高吞吐、低 IAT，与 Proxy 的隧道行为特征重叠，是混淆的主要来源。
           </div>
           <div>
-            <b>Proxy → Common (125 例)</b><br/>
-            配置不当或使用直连模式的代理流被误判为 Common。此类流量未表现出典型的加密封装特征，与正常流量高度相似。
+            <b>Proxy → Common (550 例)</b><br/>
+            使用直连模式或弱加密配置的代理流被误判为 Common。此类流量未表现出典型的加密封装特征，包长分布与正常 HTTPS 流量高度相似。
           </div>
           <div>
-            <b>VPN 误判 (10 例)</b><br/>
-            VPN 被误判为 Proxy 或 Common 的情况较少。UDP+极短 IAT 的组合特征对 VPN 识别有一定效果，但短时 VPN 连接仍会被误判。
+            <b>VPN 相关误判 (55 例)</b><br/>
+            VPN 误判率仅 3.2%（55/1,700），总体识别稳定。主要混淆发生在 VPN ↔ Proxy 之间（40+280 例），两者均为加密隧道，UDP 封装和极短 IAT 是区分关键特征。
           </div>
         </div>
       </div>

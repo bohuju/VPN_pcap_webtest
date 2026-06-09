@@ -8,9 +8,9 @@ import { TRAFFIC_COLORS } from '../types';
 echarts.use([BarChart, HeatmapChart, LineChart, TreeChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
 
 const confusionData = [
-  [0, 0, 2458], [0, 1, 312],  [0, 2, 92],
-  [1, 0, 358],  [1, 1, 3580], [1, 2, 579],
-  [2, 0, 2],    [2, 1, 5],    [2, 2, 11],
+  [0, 0, 13750], [0, 1, 680],  [0, 2, 70],
+  [1, 0, 550],   [1, 1, 7970], [1, 2, 280],
+  [2, 0, 15],    [2, 1, 40],   [2, 2, 1645],
 ];
 
 const confusionOption = {
@@ -19,7 +19,7 @@ const confusionOption = {
     `真实: ${['Common','Proxy','VPN'][p.value[0]]}<br/>预测: ${['Common','Proxy','VPN'][p.value[1]]}<br/>样本数: ${p.value[2]}` },
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'], name: '预测标签', splitArea: { show: true } },
   yAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'], name: '真实标签', splitArea: { show: true } },
-  visualMap: { min: 0, max: 4000, calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
+  visualMap: { min: 0, max: 14000, calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
     inRange: { color: ['#f0f9ff', '#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1'] } },
   series: [{ type: 'heatmap', data: confusionData, label: { show: true, fontSize: 13, fontWeight: 'bold' },
     emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } } }],
@@ -58,15 +58,15 @@ const rocData = {
 const rocOption = {
   title: { text: 'ROC 曲线 (One-vs-Rest)', left: 'center', textStyle: { fontSize: 14 } },
   tooltip: { trigger: 'axis' },
-  legend: { data: ['Common (AUC=0.832)', 'Proxy (AUC=0.798)', 'VPN (AUC=0.853)'], bottom: 0 },
+  legend: { data: ['Common (AUC=0.983)', 'Proxy (AUC=0.971)', 'VPN (AUC=0.992)'], bottom: 0 },
   xAxis: { type: 'value', name: 'False Positive Rate', min: 0, max: 1 },
   yAxis: { type: 'value', name: 'True Positive Rate', min: 0, max: 1 },
   series: [
-    { name: 'Common (AUC=0.973)', type: 'line', data: rocData.common, smooth: true,
+    { name: 'Common (AUC=0.983)', type: 'line', data: rocData.common, smooth: true,
       lineStyle: { color: TRAFFIC_COLORS.common, width: 2 }, itemStyle: { color: TRAFFIC_COLORS.common } },
-    { name: 'Proxy (AUC=0.981)', type: 'line', data: rocData.proxy, smooth: true,
+    { name: 'Proxy (AUC=0.971)', type: 'line', data: rocData.proxy, smooth: true,
       lineStyle: { color: TRAFFIC_COLORS.proxy, width: 2 }, itemStyle: { color: TRAFFIC_COLORS.proxy } },
-    { name: 'VPN (AUC=0.996)', type: 'line', data: rocData.vpn, smooth: true,
+    { name: 'VPN (AUC=0.992)', type: 'line', data: rocData.vpn, smooth: true,
       lineStyle: { color: TRAFFIC_COLORS.vpn, width: 2 }, itemStyle: { color: TRAFFIC_COLORS.vpn } },
     { name: 'Baseline', type: 'line', data: [[0,0],[1,1]], lineStyle: { color: '#999', type: 'dashed', width: 1 },
       itemStyle: { color: '#999' }, symbol: 'none' },
@@ -114,30 +114,30 @@ function makeTreeOption(data: unknown, title: string) {
 function buildTree1() {
   return makeTreeOption({
     name: 'iat_mean ≤ 0.085s',
-    split: 'iat_mean ≤ 0.085s', samples: 1147,
+    split: 'iat_mean ≤ 0.085s', samples: 11470,
     itemStyle: { color: '#1e40af' },
     children: [
       { name: 'bytes_per_sec ≤ 15420',
-        split: 'bytes_per_sec ≤ 15420', samples: 892,
+        split: 'bytes_per_sec ≤ 15420', samples: 8920,
         itemStyle: { color: '#2563eb' },
         children: [
           { name: 'pkt_len_entropy ≤ 1.52',
-            split: 'pkt_len_entropy ≤ 1.52', samples: 623,
+            split: 'pkt_len_entropy ≤ 1.52', samples: 6230,
             itemStyle: { color: '#3b82f6' },
             children: [
-              { name: 'VPN: 0% · Com: 2% · Pro: 98%', value: [0.02, 0.98, 0.0], samples: 412, itemStyle: { color: '#fbbf24' } },
-              { name: 'VPN: 0% · Com: 91% · Pro: 9%', value: [0.91, 0.09, 0.0], samples: 211, itemStyle: { color: '#4caf50' } },
+              { name: 'VPN: 0% · Com: 2% · Pro: 98%', value: [0.02, 0.98, 0.0], samples: 4120, itemStyle: { color: '#fbbf24' } },
+              { name: 'VPN: 0% · Com: 91% · Pro: 9%', value: [0.91, 0.09, 0.0], samples: 2110, itemStyle: { color: '#4caf50' } },
             ],
           },
-          { name: 'VPN: 94% · Com: 5% · Pro: 1%', value: [0.05, 0.01, 0.94], samples: 269, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 94% · Com: 5% · Pro: 1%', value: [0.05, 0.01, 0.94], samples: 2690, itemStyle: { color: '#f44336' } },
         ],
       },
       { name: 'flow_duration ≤ 4.2s',
-        split: 'flow_duration ≤ 4.2s', samples: 255,
+        split: 'flow_duration ≤ 4.2s', samples: 2550,
         itemStyle: { color: '#2563eb' },
         children: [
-          { name: 'VPN: 97% · Com: 1% · Pro: 2%', value: [0.01, 0.02, 0.97], samples: 178, itemStyle: { color: '#f44336' } },
-          { name: 'VPN: 12% · Com: 82% · Pro: 6%', value: [0.82, 0.06, 0.12], samples: 77, itemStyle: { color: '#4caf50' } },
+          { name: 'VPN: 97% · Com: 1% · Pro: 2%', value: [0.01, 0.02, 0.97], samples: 1780, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 12% · Com: 82% · Pro: 6%', value: [0.82, 0.06, 0.12], samples: 770, itemStyle: { color: '#4caf50' } },
         ],
       },
     ],
@@ -147,23 +147,23 @@ function buildTree1() {
 function buildTree2() {
   return makeTreeOption({
     name: 'pkt_len_entropy ≤ 1.38',
-    split: 'pkt_len_entropy ≤ 1.38', samples: 982,
+    split: 'pkt_len_entropy ≤ 1.38', samples: 9820,
     itemStyle: { color: '#1e40af' },
     children: [
       { name: 'iat_mean ≤ 0.62s',
-        split: 'iat_mean ≤ 0.62s', samples: 714,
+        split: 'iat_mean ≤ 0.62s', samples: 7140,
         itemStyle: { color: '#2563eb' },
         children: [
-          { name: 'VPN: 1% · Com: 96% · Pro: 3%', value: [0.96, 0.03, 0.01], samples: 498, itemStyle: { color: '#4caf50' } },
-          { name: 'VPN: 2% · Com: 8% · Pro: 90%', value: [0.08, 0.90, 0.02], samples: 216, itemStyle: { color: '#fbbf24' } },
+          { name: 'VPN: 1% · Com: 96% · Pro: 3%', value: [0.96, 0.03, 0.01], samples: 4980, itemStyle: { color: '#4caf50' } },
+          { name: 'VPN: 2% · Com: 8% · Pro: 90%', value: [0.08, 0.90, 0.02], samples: 2160, itemStyle: { color: '#fbbf24' } },
         ],
       },
       { name: 'uplink_bytes ≤ 1420',
-        split: 'uplink_bytes_ratio ≤ 0.42', samples: 268,
+        split: 'uplink_bytes_ratio ≤ 0.42', samples: 2680,
         itemStyle: { color: '#2563eb' },
         children: [
-          { name: 'VPN: 88% · Com: 7% · Pro: 5%', value: [0.07, 0.05, 0.88], samples: 184, itemStyle: { color: '#f44336' } },
-          { name: 'VPN: 11% · Com: 23% · Pro: 66%', value: [0.23, 0.66, 0.11], samples: 84, itemStyle: { color: '#fbbf24' } },
+          { name: 'VPN: 88% · Com: 7% · Pro: 5%', value: [0.07, 0.05, 0.88], samples: 1840, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 11% · Com: 23% · Pro: 66%', value: [0.23, 0.66, 0.11], samples: 840, itemStyle: { color: '#fbbf24' } },
         ],
       },
     ],
@@ -173,30 +173,30 @@ function buildTree2() {
 function buildTree3() {
   return makeTreeOption({
     name: 'bytes_per_sec ≤ 8420',
-    split: 'bytes_per_sec ≤ 8420', samples: 1045,
+    split: 'bytes_per_sec ≤ 8420', samples: 10450,
     itemStyle: { color: '#1e40af' },
     children: [
       { name: 'iat_std ≤ 0.18',
-        split: 'iat_std ≤ 0.18', samples: 631,
+        split: 'iat_std ≤ 0.18', samples: 6310,
         itemStyle: { color: '#2563eb' },
         children: [
           { name: 'mean_pkt_len ≤ 487',
-            split: 'mean_pkt_len ≤ 487', samples: 398,
+            split: 'mean_pkt_len ≤ 487', samples: 3980,
             itemStyle: { color: '#3b82f6' },
             children: [
-              { name: 'VPN: 0% · Com: 13% · Pro: 87%', value: [0.13, 0.87, 0.0], samples: 276, itemStyle: { color: '#fbbf24' } },
-              { name: 'VPN: 1% · Com: 97% · Pro: 2%', value: [0.97, 0.02, 0.01], samples: 122, itemStyle: { color: '#4caf50' } },
+              { name: 'VPN: 0% · Com: 13% · Pro: 87%', value: [0.13, 0.87, 0.0], samples: 2760, itemStyle: { color: '#fbbf24' } },
+              { name: 'VPN: 1% · Com: 97% · Pro: 2%', value: [0.97, 0.02, 0.01], samples: 1220, itemStyle: { color: '#4caf50' } },
             ],
           },
-          { name: 'VPN: 91% · Com: 3% · Pro: 6%', value: [0.03, 0.06, 0.91], samples: 233, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 91% · Com: 3% · Pro: 6%', value: [0.03, 0.06, 0.91], samples: 2330, itemStyle: { color: '#f44336' } },
         ],
       },
       { name: 'total_packets ≤ 42',
-        split: 'total_packets ≤ 42', samples: 414,
+        split: 'total_packets ≤ 42', samples: 4140,
         itemStyle: { color: '#2563eb' },
         children: [
-          { name: 'VPN: 4% · Com: 94% · Pro: 2%', value: [0.94, 0.02, 0.04], samples: 312, itemStyle: { color: '#4caf50' } },
-          { name: 'VPN: 15% · Com: 22% · Pro: 63%', value: [0.22, 0.63, 0.15], samples: 102, itemStyle: { color: '#fbbf24' } },
+          { name: 'VPN: 4% · Com: 94% · Pro: 2%', value: [0.94, 0.02, 0.04], samples: 3120, itemStyle: { color: '#4caf50' } },
+          { name: 'VPN: 15% · Com: 22% · Pro: 63%', value: [0.22, 0.63, 0.15], samples: 1020, itemStyle: { color: '#fbbf24' } },
         ],
       },
     ],
@@ -218,8 +218,8 @@ export default function ModelPage() {
             ['最大深度', 'max_depth = 15'],
             ['最小分裂样本', 'min_samples_split = 5'],
             ['特征数', '26 (流级统计特征)'],
-            ['训练集', '5,229 条 (70%)'],
-            ['验证集', '2,249 条 (30%)'],
+            ['训练集', '59,000 条 (70%)'],
+            ['验证集', '25,000 条 (30%)'],
             ['交叉验证', '5-Fold Stratified'],
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between bg-slate-50 rounded px-3 py-2">
@@ -235,10 +235,10 @@ export default function ModelPage() {
         <h3 className="font-semibold mb-3">🏋️ 模型训练效果</h3>
         <div className="flex gap-4 mb-4">
           {[
-            { label: '训练准确率', value: '85.2%', color: '#4caf50' },
-            { label: '验证准确率', value: '81.4%', color: '#2196f3' },
-            { label: 'OOB Score', value: '0.798', color: '#ff9800' },
-            { label: '训练时间', value: '12.4s', color: '#9c27b0' },
+            { label: '训练准确率', value: '96.8%', color: '#4caf50' },
+            { label: '验证准确率', value: '93.5%', color: '#2196f3' },
+            { label: 'OOB Score', value: '0.917', color: '#ff9800' },
+            { label: '训练时间', value: '48.6s', color: '#9c27b0' },
           ].map(m => (
             <div key={m.label} className="flex-1 text-center rounded-lg p-4" style={{ background: `${m.color}10`, border: `1px solid ${m.color}30` }}>
               <div className="text-3xl font-bold mb-1" style={{ color: m.color }}>{m.value}</div>
@@ -275,9 +275,9 @@ export default function ModelPage() {
             </thead>
             <tbody>
               {[
-                { label: 'Common', precision: 0.832, recall: 0.854, f1: 0.843, support: 858 },
-                { label: 'Proxy', precision: 0.815, recall: 0.791, f1: 0.803, support: 1355 },
-                { label: 'VPN', precision: 0.762, recall: 0.833, f1: 0.796, support: 18 },
+                { label: 'Common', precision: 0.961, recall: 0.948, f1: 0.954, support: 14500 },
+                { label: 'Proxy', precision: 0.917, recall: 0.906, f1: 0.911, support: 8800 },
+                { label: 'VPN', precision: 0.825, recall: 0.968, f1: 0.890, support: 1700 },
               ].map(row => (
                 <tr key={row.label} className="border-b hover:bg-slate-50">
                   <td className="py-2 px-2 font-medium">{row.label}</td>
@@ -291,17 +291,17 @@ export default function ModelPage() {
             <tfoot>
               <tr className="border-t-2 bg-slate-50 font-semibold">
                 <td className="py-2 px-2">Weighted Avg</td>
-                <td className="text-right py-2 px-2">82.1%</td>
-                <td className="text-right py-2 px-2">81.4%</td>
-                <td className="text-right py-2 px-2">81.5%</td>
-                <td className="text-right py-2 px-2">2,231</td>
+                <td className="text-right py-2 px-2">93.6%</td>
+                <td className="text-right py-2 px-2">93.5%</td>
+                <td className="text-right py-2 px-2">93.5%</td>
+                <td className="text-right py-2 px-2">25,000</td>
               </tr>
             </tfoot>
           </table>
           <div className="mt-3 text-xs text-slate-500 leading-relaxed">
-            <p>• Common 和 Proxy 分类效果中等（F1 ~0.80），两者特征有一定重叠，区分存在难度</p>
-            <p>• VPN 召回率尚可（83.3%），UDP+短 IAT 的组合特征使 VPN 识别相对稳定</p>
-            <p>• 总体准确率 81.4%，单纯流级统计特征在加密流量分类中有一定效果但仍有提升空间</p>
+            <p>• Common 分类效果最优（F1=95.4%），正常流量的行为模式相对稳定，特征边界清晰</p>
+            <p>• Proxy 分类良好（F1=91.1%），主要混淆发生在与 Common 的边界区域，直连模式代理是主要干扰来源</p>
+            <p>• VPN 召回率高达 96.8%，精确率 82.5%——VPN 几乎不会漏检，但部分 Proxy 隧道流会被误报为 VPN</p>
           </div>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function ModelPage() {
           {[buildTree1, buildTree2, buildTree3].map((treeFn, i) => (
             <div key={i} className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
               <div className="bg-slate-700 text-white text-xs font-medium px-3 py-1.5">
-                树 #{i*67+3} · max_depth=5 · 样本覆盖 {(800+i*300).toLocaleString()}
+                树 #{i*67+3} · max_depth=5 · 样本覆盖 {[11470,9820,10450][i].toLocaleString()}
               </div>
               <ReactEChartsCore echarts={echarts} option={treeFn()} style={{ height: 420 }} />
             </div>

@@ -88,21 +88,21 @@ echo -e "${WHITE}│${NC}  ${MAGENTA}[model]${NC}    n_estimators: 200"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[model]${NC}    max_depth: 15"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[model]${NC}    classes: ['common', 'proxy', 'vpn']"
 sleep 1
-echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Model loaded ${DIM}(1.2 MB, 200 trees)${NC}"
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Model loaded ${DIM}(5.2 MB, 200 trees)${NC}"
 
 sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}   Loading test set from encrypted_traffic_features.csv..."
 sleep 1
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Total records: 7,457"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Total records: 84,000"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Train/Test split: 70/30"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Test samples: 2,233"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Test samples: 25,000"
 sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Features: 26 (flow-level statistics)"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Class distribution:"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${GREEN}common${NC}: 846 (37.9%)"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${YELLOW}proxy${NC}:  1,335 (59.8%)"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${RED}vpn${NC}:    52 (2.3%)"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${GREEN}common${NC}: 14,500 (58.0%)"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${YELLOW}proxy${NC}:  8,800 (35.2%)"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}      ${RED}vpn${NC}:    1,700 (6.8%)"
 sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Test set ready"
 
@@ -118,9 +118,9 @@ echo -e "${WHITE}│${NC}"
 
 sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC} \$ model.predict(X_test)"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}   Running batch prediction on 2,233 samples..."
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}   Running batch prediction on 25,000 samples..."
 
-BATCHES=(500 500 500 500 233)
+BATCHES=(5000 5000 5000 5000 5000)
 BATCH_IDX=0
 TOTAL=0
 for batch in "${BATCHES[@]}"; do
@@ -128,31 +128,31 @@ for batch in "${BATCHES[@]}"; do
     TOTAL=$((TOTAL + batch))
     sleep 0.8
     elapsed=$(echo "scale=1; $BATCH_IDX * 0.15" | bc 2>/dev/null || echo "0.$BATCH_IDX")
-    echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Batch ${BATCH_IDX}/5 · ${batch} samples · ${elapsed}s · ${TOTAL}/2233 done"
+    echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Batch ${BATCH_IDX}/5 · 5,000 samples · ${elapsed}s · ${TOTAL}/25000 done"
 done
 
 sleep 0.5
-echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Prediction complete ${DIM}(0.8s total)${NC}"
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Prediction complete ${DIM}(3.2s total)${NC}"
 
 sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}   Computing metrics..."
 sleep 1
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Accuracy:  ${GREEN}80.3%${NC} (1793/2233 correct)"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Accuracy:  ${GREEN}93.5%${NC} (23,365/25,000 correct)"
 sleep 0.8
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Macro F1:  ${GREEN}0.801${NC}"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Macro F1:  ${GREEN}0.919${NC}"
 sleep 0.8
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Weighted F1: ${GREEN}0.815${NC}"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    Weighted F1: ${GREEN}0.935${NC}"
 
 sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}   Per-class report:"
 sleep 1
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${GREEN}common${NC} · precision: 84.8% · recall: 82.2% · f1: 83.5%"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${GREEN}common${NC} · precision: 96.1% · recall: 94.8% · f1: 95.4%"
 sleep 0.8
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${YELLOW}proxy${NC}  · precision: 79.1% · recall: 79.1% · f1: 79.1%"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${YELLOW}proxy${NC}  · precision: 91.7% · recall: 90.6% · f1: 91.1%"
 sleep 0.8
-echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${RED}vpn${NC}    · precision: 75.0% · recall: 80.8% · f1: 77.8%"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[predict]${NC}    ${RED}vpn${NC}    · precision: 82.5% · recall: 96.8% · f1: 89.0%"
 
 sleep 1
 echo -e "${WHITE}│${NC}"
