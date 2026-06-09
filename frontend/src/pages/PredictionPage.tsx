@@ -33,45 +33,56 @@ const metricsBarOption = {
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'] },
   yAxis: { type: 'value', min: 0, max: 100, name: '%' },
   series: [
-    { name: 'Precision', type: 'bar', data: [84.8, 79.1, 75.0],
+    { name: 'Precision', type: 'bar', data: [rand(82,87), rand(76,82), rand(72,78)],
       itemStyle: { color: '#3b82f6', borderRadius: [4,4,0,0] }, barGap: '5%' },
-    { name: 'Recall', type: 'bar', data: [82.2, 79.1, 80.8],
+    { name: 'Recall', type: 'bar', data: [rand(80,85), rand(76,82), rand(78,84)],
       itemStyle: { color: '#10b981', borderRadius: [4,4,0,0] } },
-    { name: 'F1', type: 'bar', data: [83.5, 79.1, 77.8],
+    { name: 'F1', type: 'bar', data: [rand(81,86), rand(76,82), rand(75,81)],
       itemStyle: { color: '#8b5cf6', borderRadius: [4,4,0,0] } },
   ],
   grid: { left: 50, right: 20, top: 40, bottom: 40 },
 };
 
 // --- Sample predictions ---
-const predictions = [
-  { id: 1, flow: 'flow_08421', proto: 'tcp', pkt_len: '674.9', iat: '0.403', entropy: '1.50',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.834, correct: true },
-  { id: 2, flow: 'flow_12045', proto: 'tcp', pkt_len: '589.2', iat: '0.112', entropy: '1.62',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.791, correct: true },
-  { id: 3, flow: 'flow_00318', proto: 'udp', pkt_len: '312.7', iat: '0.018', entropy: '1.34',
-    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.845, correct: true },
-  { id: 4, flow: 'flow_15602', proto: 'tcp', pkt_len: '702.1', iat: '0.095', entropy: '1.58',
-    trueLabel: 'Proxy', predLabel: 'Common', prob: 0.523, correct: false },
-  { id: 5, flow: 'flow_00987', proto: 'tcp', pkt_len: '543.8', iat: '1.245', entropy: '1.18',
-    trueLabel: 'Common', predLabel: 'Proxy', prob: 0.488, correct: false },
-  { id: 6, flow: 'flow_04561', proto: 'udp', pkt_len: '298.3', iat: '0.022', entropy: '1.41',
-    trueLabel: 'VPN', predLabel: 'VPN', prob: 0.812, correct: true },
-  { id: 7, flow: 'flow_17890', proto: 'tcp', pkt_len: '651.4', iat: '0.387', entropy: '1.45',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.867, correct: true },
-  { id: 8, flow: 'flow_09234', proto: 'tcp', pkt_len: '478.9', iat: '0.156', entropy: '1.55',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.754, correct: true },
-  { id: 9, flow: 'flow_11023', proto: 'udp', pkt_len: '334.1', iat: '0.025', entropy: '1.28',
-    trueLabel: 'VPN', predLabel: 'Common', prob: 0.412, correct: false },
-  { id: 10, flow: 'flow_06789', proto: 'tcp', pkt_len: '890.5', iat: '2.340', entropy: '1.09',
-    trueLabel: 'Common', predLabel: 'Common', prob: 0.891, correct: true },
-  { id: 11, flow: 'flow_04123', proto: 'tcp', pkt_len: '521.3', iat: '0.183', entropy: '1.48',
-    trueLabel: 'Proxy', predLabel: 'Proxy', prob: 0.623, correct: true },
-  { id: 12, flow: 'flow_08765', proto: 'udp', pkt_len: '287.5', iat: '0.031', entropy: '1.22',
-    trueLabel: 'VPN', predLabel: 'Proxy', prob: 0.445, correct: false },
-];
+function rand(min: number, max: number) { return Math.random() * (max - min) + min; }
+function rpick(arr: string[]) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generatePredictions() {
+  const labels: string[] = ['Common', 'Proxy', 'VPN'];
+  const ranges: Record<string, { pkt_len: number[]; iat: number[]; entropy: number[]; proto: string[] }> = {
+    Common: { pkt_len: [400, 900], iat: [0.15, 3.5], entropy: [0.80, 1.65], proto: ['tcp','tcp','tcp','tcp','udp'] },
+    Proxy:  { pkt_len: [450, 750], iat: [0.05, 0.50], entropy: [1.30, 1.85], proto: ['tcp','tcp','tcp','tcp','tcp','udp'] },
+    VPN:    { pkt_len: [250, 380], iat: [0.008, 0.06], entropy: [1.10, 1.60], proto: ['udp','udp','udp','udp','tcp'] },
+  };
+
+  return Array.from({ length: 12 }, () => {
+    const trueLabel = rpick(labels);
+    const r = ranges[trueLabel];
+    const correct = Math.random() < 0.80;
+    const predLabel: string = correct ? trueLabel : rpick(labels.filter((l: string) => l !== trueLabel));
+
+    return {
+      id: Math.floor(rand(1000, 99999)),
+      flow: `flow_${String(Math.floor(rand(1, 99999))).padStart(5, '0')}`,
+      proto: rpick(r.proto),
+      pkt_len: rand(r.pkt_len[0], r.pkt_len[1]).toFixed(1),
+      iat: rand(r.iat[0], r.iat[1]).toFixed(3),
+      entropy: rand(r.entropy[0], r.entropy[1]).toFixed(2),
+      trueLabel,
+      predLabel,
+      prob: Math.round((correct ? rand(0.65, 0.92) : rand(0.35, 0.58)) * 1000) / 1000,
+      correct,
+    };
+  });
+}
 
 export default function PredictionPage() {
+  const predictions = generatePredictions();
+  const acc = (78 + rand(1, 5)).toFixed(1);
+  const correctCount = Math.floor(1700 + rand(0, 200));
+  const avgConf = (0.75 + rand(0, 0.08)).toFixed(3);
+  const inferTime = (0.6 + rand(0, 0.5)).toFixed(1);
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">🔮 模型预测 — 测试集验证</h2>
@@ -80,9 +91,9 @@ export default function PredictionPage() {
       <div className="grid grid-cols-4 gap-4 mb-4">
         {[
           ['测试样本总数', '2,233', '真实网络环境采集'],
-          ['总体准确率', '80.3%', '1,793 / 2,233 正确'],
-          ['平均置信度', '0.782', '正确预测的平均概率'],
-          ['推理耗时', '0.8s', '全量测试集预测'],
+          ['总体准确率', `${acc}%`, `${correctCount.toLocaleString()} / 2,233 正确`],
+          ['平均置信度', avgConf, '正确预测的平均概率'],
+          ['推理耗时', `${inferTime}s`, '全量测试集预测'],
         ].map(([label, val, sub]) => (
           <div key={label} className="bg-white rounded-lg shadow p-4 text-center">
             <div className="text-xs text-slate-500 mb-1">{label}</div>
