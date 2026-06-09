@@ -21,14 +21,23 @@ export default function TlsPage() {
     );
   }
 
+  // Color palettes per traffic type (dark + light variants)
+  const palettes: Record<string, string[]> = {
+    common: ['#2e7d32', '#81c784'],
+    proxy: ['#e65100', '#ffb74d'],
+    vpn: ['#c62828', '#ef9a9a'],
+  };
+
   const series = TRAFFIC_TYPES.map((type) => ({
     name: TRAFFIC_LABELS[type],
     type: 'pie' as const,
     radius: ['30%', '50%'],
     center: [type === 'common' ? '20%' : type === 'proxy' ? '50%' : '80%', '55%'],
-    data: data.version_distribution[type].map((v) => ({ name: v.name, value: v.value })),
+    data: data.version_distribution[type].map((v, i) => ({
+      name: v.name, value: v.value,
+      itemStyle: { color: palettes[type][i % palettes[type].length] },
+    })),
     label: { formatter: '{b}\n{d}%' },
-    itemStyle: { color: TRAFFIC_COLORS[type] },
   }));
 
   const option = {
