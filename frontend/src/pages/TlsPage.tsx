@@ -5,7 +5,7 @@ import { TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import InsightCard from '../components/InsightCard';
 import { useTlsData } from '../hooks/useAnalysis';
-import { TRAFFIC_COLORS, TRAFFIC_TYPES, TRAFFIC_LABELS } from '../types';
+import { TRAFFIC_TYPES, TRAFFIC_LABELS } from '../types';
 
 echarts.use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer]);
 
