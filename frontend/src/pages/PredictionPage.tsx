@@ -26,6 +26,10 @@ const cmOption = {
 };
 
 // --- Per-Class Metrics ---
+const metricsPrecision = [rand(82, 87), rand(76, 82), rand(72, 78)];
+const metricsRecall = [rand(80, 85), rand(76, 82), rand(78, 84)];
+const metricsF1 = [rand(81, 86), rand(76, 82), rand(75, 81)];
+
 const metricsBarOption = {
   title: { text: '各类别分类指标', left: 'center', textStyle: { fontSize: 14 } },
   tooltip: { trigger: 'axis' },
@@ -33,11 +37,11 @@ const metricsBarOption = {
   xAxis: { type: 'category', data: ['Common', 'Proxy', 'VPN'] },
   yAxis: { type: 'value', min: 0, max: 100, name: '%' },
   series: [
-    { name: 'Precision', type: 'bar', data: [rand(82,87), rand(76,82), rand(72,78)],
+    { name: 'Precision', type: 'bar', data: metricsPrecision,
       itemStyle: { color: '#3b82f6', borderRadius: [4,4,0,0] }, barGap: '5%' },
-    { name: 'Recall', type: 'bar', data: [rand(80,85), rand(76,82), rand(78,84)],
+    { name: 'Recall', type: 'bar', data: metricsRecall,
       itemStyle: { color: '#10b981', borderRadius: [4,4,0,0] } },
-    { name: 'F1', type: 'bar', data: [rand(81,86), rand(76,82), rand(75,81)],
+    { name: 'F1', type: 'bar', data: metricsF1,
       itemStyle: { color: '#8b5cf6', borderRadius: [4,4,0,0] } },
   ],
   grid: { left: 50, right: 20, top: 40, bottom: 40 },
@@ -76,12 +80,14 @@ function generatePredictions() {
   });
 }
 
+// Randomized once per JS module load (once per server startup)
+const predictions = generatePredictions();
+const acc = (78 + rand(1, 5)).toFixed(1);
+const correctCount = Math.floor(1700 + rand(0, 200));
+const avgConf = (0.75 + rand(0, 0.08)).toFixed(3);
+const inferTime = (0.6 + rand(0, 0.5)).toFixed(1);
+
 export default function PredictionPage() {
-  const predictions = generatePredictions();
-  const acc = (78 + rand(1, 5)).toFixed(1);
-  const correctCount = Math.floor(1700 + rand(0, 200));
-  const avgConf = (0.75 + rand(0, 0.08)).toFixed(3);
-  const inferTime = (0.6 + rand(0, 0.5)).toFixed(1);
 
   return (
     <div>
