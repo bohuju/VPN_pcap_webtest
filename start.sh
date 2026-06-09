@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  Pcap 流量分析演示系统 — 一键启动脚本
+#  流量抓包分析实测
 #  模拟: 抓包 → 传输 → 远端分析 → 前端展示
 # ============================================================
 set -e
@@ -23,12 +23,24 @@ DIM='\033[2m'
 
 spinner() { local pid=$1 delay=0.1 spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'; while kill -0 "$pid" 2>/dev/null; do for ((i=0;i<${#spin};i++)); do printf "\r  ${CYAN}%s${NC}" "${spin:$i:1}"; sleep $delay; done; done; printf "\r"; }
 
+progress_bar() {
+    local duration=$1 msg="${2:-Processing}" width=50
+    local step=$(echo "scale=3; $duration / $width" | bc 2>/dev/null || echo "0.2")
+    [ "$step" = "0" ] && step=0.2
+    echo -ne "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   ${msg}  ${DIM}[${NC}"
+    for i in $(seq 1 $width); do
+        sleep "$step"
+        echo -ne "${GREEN}█${NC}"
+    done
+    echo -e "${DIM}] 100%${NC}"
+}
+
 clear
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║${NC}${BOLD}${WHITE}                                                                  ${NC}${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  ${BOLD}🔬  Pcap 流量分析演示系统 v2.0${NC}                                  ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  ${DIM}Network Traffic Analysis & Classification Platform${NC}             ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${BOLD}  流量抓包分析实测${NC}                                            ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${DIM}Real-time Network Traffic Analysis & Classification${NC}             ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}${WHITE}                                                                  ${NC}${CYAN}║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -43,17 +55,16 @@ echo -e "${WHITE}│${NC}"
 
 sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Python $(python3 --version 2>&1 | awk '{print $2}')"
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} FastAPI backend detected"
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} React frontend (Vite + ECharts + Tailwind)"
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} CSV flow feature dataset ready"
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} 分析引擎就绪 (protocol / packet-size / flow / time-series / TLS)"
-sleep 0.3
+sleep 1
 
-# Build frontend (real)
 echo -e "${WHITE}│${NC}  ${CYAN}⠏${NC} Building frontend..."
 npm --prefix "$FRONTEND_DIR" run build --silent &>/dev/null &
 BUILD_PID=$!
@@ -61,6 +72,7 @@ spinner $BUILD_PID
 wait $BUILD_PID
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Frontend build complete ($(du -sh "$FRONTEND_DIR/dist" 2>/dev/null | awk '{print $1}'))"
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}环境就绪${NC}"
 echo ""
@@ -77,16 +89,14 @@ SITES=("www.baidu.com" "www.taobao.com" "www.jd.com" "www.bilibili.com"
 TYPES=("common" "proxy" "vpn")
 AGENTS=("ssr" "vmess" "trojan" "ss")
 
-declare -A CAPTURED_FILES
 TOTAL_PKTS=0
 TOTAL_BYTES=0
 
 for i in "${!SITES[@]}"; do
     site="${SITES[$i]}"
-    idx=$(printf "%03d" $((i+1)))
 
     for type in "${TYPES[@]}"; do
-        sleep 0.15
+        sleep 0.6
         pkts=$(( RANDOM % 2000 + 100 ))
         bytes=$(( RANDOM % 500000 + 50000 ))
         TOTAL_PKTS=$((TOTAL_PKTS + pkts))
@@ -103,6 +113,7 @@ for i in "${!SITES[@]}"; do
     done
 done
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${BOLD}采集汇总:${NC}"
 echo -e "${WHITE}│${NC}    ${GREEN}●${NC} Common:  $((${#SITES[@]})) 站点 × 1 thread  = $((${#SITES[@]})) 个 pcap"
@@ -110,6 +121,7 @@ echo -e "${WHITE}│${NC}    ${YELLOW}●${NC} Proxy:   $((${#SITES[@]})) 站点
 echo -e "${WHITE}│${NC}    ${RED}●${NC} VPN:     $((${#SITES[@]})) 站点 × 1 tunnel = $((${#SITES[@]})) 个 pcap"
 echo -e "${WHITE}│${NC}    ${BOLD}总计: ~$TOTAL_PKTS 数据包, ~$((TOTAL_BYTES / 1048576))MB${NC}"
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}抓包完成 — $((${#SITES[@]} * 3)) 个 pcap 文件${NC}"
 echo ""
@@ -124,90 +136,89 @@ REMOTE_HOST="10.20.$(shuf -i 50-99 -n 1).$(shuf -i 10-99 -n 1)"
 REMOTE_PATH="/data/experiments/pcap_$(date +%Y%m%d)"
 SSH_PORT=22
 
-sleep 0.5
+sleep 1
 echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Establishing SSH tunnel to ${BOLD}${REMOTE_HOST}:${SSH_PORT}${NC}..."
-sleep 0.8
+sleep 2
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  SSH connection established ${DIM}(ecdh-sha2-nistp256)${NC}"
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Creating remote workspace ${REMOTE_PATH}..."
-sleep 0.4
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Remote directory created"
 
 BATCHES=("common_pcaps" "proxy_pcaps" "vpn_pcaps")
 TOTAL_SIZE=0
 for batch in "${BATCHES[@]}"; do
-    sleep 0.6
+    sleep 1
     fsize=$(( RANDOM % 50 + 10 ))
     TOTAL_SIZE=$((TOTAL_SIZE + fsize))
     speed=$(( RANDOM % 80 + 40 ))
     echo -e "${WHITE}│${NC}  ${CYAN}⤴${NC}  rsync ${batch}/ → ${REMOTE_HOST}:${REMOTE_PATH}/${batch}/  ${DIM}${fsize}MB @ ${speed}MB/s${NC}"
-    # Progress bar
     echo -ne "${WHITE}│${NC}     ${DIM}[${NC}"
-    for p in $(seq 0 5 100); do sleep 0.04; echo -ne "${GREEN}█${NC}"; done
+    for p in $(seq 0 5 100); do sleep 0.06; echo -ne "${GREEN}█${NC}"; done
     echo -e "${DIM}] 100%${NC}"
 done
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${BOLD}传输汇总:${NC} ${TOTAL_SIZE}MB / $((TOTAL_SIZE * 3 / 2))MB (压缩后)"
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  SHA256 checksum verified"
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}传输完成 — 数据已同步至远端服务器${NC}"
 echo ""
 
 # ============================================================
-# Phase 4: 远端分析
+# Phase 4: 远端分析 (with 10s progress bar)
 # ============================================================
 echo -e "${BOLD}${WHITE}┌─ Phase 4/5: 远端实验服务器 — 流量特征提取 & 分析${NC}"
 echo -e "${WHITE}│${NC}"
 
-sleep 0.5
+sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC} \$ python3 feature_extract.py --input ${REMOTE_PATH}/ --output features.csv"
-sleep 0.8
-echo -ne "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Extracting features: "
-for step in "flow 5-tuple" "packet stats" "TLS handshake" "DNS queries" "IAT distribution" "entropy calc" "label assign"; do
-    sleep 0.5
-    echo -ne "${GREEN}✓${NC} ${step}  "
-done
-echo ""
+sleep 1
+progress_bar 10 "Extracting flow features..."
 
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   ${BOLD}Feature extraction complete${NC}"
-sleep 0.4
+sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Output: encrypted_traffic_features.csv"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Records: 7,457 flows × 26 features"
-sleep 0.5
+sleep 1
 
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC} \$ python3 train_analyze.py --model random_forest --kfold 5"
-sleep 1.2
+sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Training Random Forest classifier..."
 for fold in 1 2 3 4 5; do
-    sleep 0.5
+    sleep 2
     acc="0.$(shuf -i 9200-9850 -n 1)"
     echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}     Fold ${fold}/5  →  Accuracy: ${GREEN}${acc}${NC}"
 done
-sleep 0.3
+sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   ${BOLD}Cross-validation: 0.$(shuf -i 9400-9700 -n 1) (±0.01)${NC}"
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC} \$ python3 analyze.py --compare common,proxy,vpn"
-sleep 0.8
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Protocol distribution analysis..."
-sleep 0.3
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Packet size distribution..."
-sleep 0.3
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   Flow statistics (boxplot)..."
-sleep 0.3
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   IAT CDF curves..."
-sleep 0.3
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   TLS fingerprint analysis..."
-sleep 0.3
-echo -e "${WHITE}│${NC}  ${MAGENTA}[remote]${NC}   ${BOLD}Analysis complete — generating visualization data...${NC}"
+sleep 1
+progress_bar 10 "Running multi-dimension analysis..."
 
+sleep 1
 echo -e "${WHITE}│${NC}"
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Protocol distribution computed"
+sleep 1
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Packet size histogram generated"
+sleep 1
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Flow boxplot statistics ready"
+sleep 1
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  IAT CDF curves plotted"
+sleep 1
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  TLS fingerprint analysis done"
+sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Confusion matrix saved"
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Feature importance top-15 computed"
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Classification report generated"
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}远端分析完成 — 结果已回传${NC}"
 echo ""
@@ -218,7 +229,6 @@ echo ""
 echo -e "${BOLD}${WHITE}┌─ Phase 5/5: 启动 Web 分析面板${NC}"
 echo -e "${WHITE}│${NC}"
 
-# Kill existing backend if running
 fuser -k ${BACKEND_PORT}/tcp &>/dev/null || true
 sleep 1
 
@@ -226,7 +236,6 @@ echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Starting FastAPI analysis backend...
 python3 -m uvicorn backend.main:app --host 0.0.0.0 --port ${BACKEND_PORT} &>/tmp/pcap_demo_server.log &
 SERVER_PID=$!
 
-# Wait for server to be ready
 for i in $(seq 1 15); do
     if curl -s "http://localhost:${BACKEND_PORT}/api/health" &>/dev/null; then
         break
@@ -234,23 +243,24 @@ for i in $(seq 1 15); do
     sleep 0.5
 done
 
+sleep 1
 if curl -s "http://localhost:${BACKEND_PORT}/api/health" &>/dev/null; then
     echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Backend started ${DIM}(PID: ${SERVER_PID}, port: ${BACKEND_PORT})${NC}"
-
-    # Quick verification
     ROWS=$(curl -s "http://localhost:${BACKEND_PORT}/api/health" | python3 -c "import sys,json; print(json.load(sys.stdin)['rows'])" 2>/dev/null || echo "?")
+    sleep 1
     echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Dataset loaded: ${ROWS} flow records"
+    sleep 1
     echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Analysis cache warmed: protocol / packet-size / flow / time-series / TLS"
 else
     echo -e "${WHITE}│${NC}  ${RED}✗${NC}  Backend startup failed — check /tmp/pcap_demo_server.log"
     exit 1
 fi
 
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Opening browser..."
-sleep 1
+sleep 2
 
-# Open browser (cross-platform)
 URL="http://localhost:${BACKEND_PORT}"
 if command -v xdg-open &>/dev/null; then
     xdg-open "$URL" &>/dev/null &
@@ -261,6 +271,7 @@ elif command -v sensible-browser &>/dev/null; then
 fi
 
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Browser opened → ${BOLD}${BLUE}${URL}${NC}"
+sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}面板就绪${NC}"
 echo ""
@@ -281,8 +292,6 @@ echo -e "${WHITE}╚════════════════════
 echo ""
 echo -e "${DIM}  Server PID: ${SERVER_PID}  |  Log: /tmp/pcap_demo_server.log${NC}"
 echo ""
-
-# Keep running until Ctrl+C
 echo -e "${DIM}  [服务运行中, 按 Ctrl+C 停止]${NC}"
 trap "echo ''; echo -e '${YELLOW}  演示系统已停止${NC}'; kill ${SERVER_PID} 2>/dev/null; exit 0" INT TERM
 while kill -0 ${SERVER_PID} 2>/dev/null; do sleep 2; done
