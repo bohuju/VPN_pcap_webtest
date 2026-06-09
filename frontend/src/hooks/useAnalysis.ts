@@ -26,6 +26,10 @@ export function useTlsData() {
   return useSWR<TlsData>('/api/analysis/tls', fetcher);
 }
 
+export function usePredictionSamples() {
+  return useSWR('/api/prediction-samples', fetcher);
+}
+
 export function usePacketTable(type: string, page: number, size: number) {
   const key = `/api/packets?type=${type}&page=${page}&size=${size}`;
   return useSWR<PacketTableData>(key, fetcher);

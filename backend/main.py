@@ -19,6 +19,37 @@ cache = LRUCache(max_size=64, ttl_seconds=3600)
 csv_rows: list[dict] = []
 
 
+def _generate_prediction_samples():
+    """Generate randomized demo prediction data once at startup."""
+    import random
+    labels = ["Common", "Proxy", "VPN"]
+    ranges = {
+        "Common": {"pkt_len": (400, 900), "iat": (0.15, 3.5), "entropy": (0.80, 1.65), "proto": ["tcp"]*4+["udp"]},
+        "Proxy":  {"pkt_len": (450, 750), "iat": (0.05, 0.50), "entropy": (1.30, 1.85), "proto": ["tcp"]*5+["udp"]},
+        "VPN":    {"pkt_len": (250, 380), "iat": (0.008, 0.06), "entropy": (1.10, 1.60), "proto": ["udp"]*4+["tcp"]},
+    }
+    samples = []
+    for _ in range(12):
+        true_label = random.choice(labels)
+        r = ranges[true_label]
+        correct = random.random() < 0.80
+        pred_label = true_label if correct else random.choice([l for l in labels if l != true_label])
+        prob = round(random.uniform(0.65, 0.92) if correct else random.uniform(0.35, 0.58), 3)
+        samples.append({
+            "id": random.randint(1000, 99999),
+            "flow": f"flow_{random.randint(1,99999):05d}",
+            "proto": random.choice(r["proto"]),
+            "pkt_len": f"{random.uniform(*r['pkt_len']):.1f}",
+            "iat": f"{random.uniform(*r['iat']):.3f}",
+            "entropy": f"{random.uniform(*r['entropy']):.2f}",
+            "trueLabel": true_label,
+            "predLabel": pred_label,
+            "prob": prob,
+            "correct": correct,
+        })
+    return samples
+
+
 def refresh_cache():
     """Compute all analysis results from CSV and populate LRU cache."""
     global csv_rows
@@ -30,6 +61,7 @@ def refresh_cache():
     cache.put("flow", compute_flow(csv_rows).model_dump())
     cache.put("time_series", compute_time_series(csv_rows).model_dump())
     cache.put("tls", compute_tls(csv_rows).model_dump())
+    cache.put("prediction_samples", _generate_prediction_samples())
 
 
 @asynccontextmanager
@@ -111,6 +143,12 @@ async def get_packets(
 ):
     result = get_packet_table(csv_rows, type, page, size)
     return result.model_dump()
+
+
+@app.get("/api/prediction-samples")
+async def get_prediction_samples():
+    """Return randomized prediction data, generated once at startup."""
+    return cache.get("prediction_samples")
 
 
 # Serve frontend static files
