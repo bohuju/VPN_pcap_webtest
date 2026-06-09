@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/time-series', label: '⏱ 时间序列', end: false },
   { to: '/tls', label: '🔐 TLS 特征', end: false },
   { to: '/data-table', label: '📋 详细数据表', end: false },
+  { to: '/model', label: '🧠 随机森林模型', end: false },
 ];
 
 export default function AnalysisNav() {

@@ -9,6 +9,7 @@ import FlowPage from './pages/FlowPage';
 import TimeSeriesPage from './pages/TimeSeriesPage';
 import TlsPage from './pages/TlsPage';
 import DataTablePage from './pages/DataTablePage';
+import ModelPage from './pages/ModelPage';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
                 <Route path="/time-series" element={<TimeSeriesPage />} />
                 <Route path="/tls" element={<TlsPage />} />
                 <Route path="/data-table" element={<DataTablePage />} />
+                <Route path="/model" element={<ModelPage />} />
               </Routes>
             </main>
           </div>
