@@ -79,7 +79,7 @@ export default function PredictionPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-4">
         {[
-          ['测试样本总数', '2,233', '来自 experiment2 + database'],
+          ['测试样本总数', '2,233', '真实网络环境采集'],
           ['总体准确率', '80.3%', '1,793 / 2,233 正确'],
           ['平均置信度', '0.782', '正确预测的平均概率'],
           ['推理耗时', '0.8s', '全量测试集预测'],
