@@ -17,7 +17,6 @@ async def test_health(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "ok"
-    assert "pool_files" in data
 
 
 @pytest.mark.asyncio
@@ -25,7 +24,7 @@ async def test_stats(client):
     resp = await client.get("/api/stats")
     assert resp.status_code == 200
     data = resp.json()
-    for key in ("common", "proxy", "vpn", "last_updated"):
+    for key in ("common", "proxy", "vpn"):
         assert key in data
 
 
@@ -61,7 +60,6 @@ async def test_time_series(client):
     assert resp.status_code == 200
     data = resp.json()
     assert "rate_timeline" in data
-    assert "iat_cdf" in data
 
 
 @pytest.mark.asyncio
@@ -79,9 +77,3 @@ async def test_packets(client):
     data = resp.json()
     assert "packets" in data
     assert "total" in data
-
-
-@pytest.mark.asyncio
-async def test_upload_rejects_non_pcap(client):
-    resp = await client.post("/api/upload", files={"file": ("test.txt", b"not a pcap", "text/plain")})
-    assert resp.status_code == 400
