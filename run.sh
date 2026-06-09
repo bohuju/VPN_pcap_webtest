@@ -29,7 +29,7 @@ if python3 -c "import fastapi, uvicorn, scapy, watchdog" &>/dev/null; then
     echo -e "      ${GREEN}✓${NC} Python packages already installed"
 else
     echo -e "      Installing backend requirements..."
-    pip install --break-system-packages -q -r "$BACKEND_DIR/requirements.txt" 2>&1 | tail -1
+    pip install --break-system-packages -q -r "$BACKEND_DIR/requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1 | tail -1
     echo -e "      ${GREEN}✓${NC} Python packages installed"
 fi
 
@@ -39,14 +39,18 @@ if [ -d "$FRONTEND_DIR/node_modules" ]; then
     echo -e "      ${GREEN}✓${NC} node_modules already exists"
 else
     echo -e "      npm install (this may take a minute)..."
-    npm --prefix "$FRONTEND_DIR" install --silent 2>&1 | tail -1
+    npm --prefix "$FRONTEND_DIR" install --registry=https://registry.npmmirror.com --silent 2>&1 | tail -1
     echo -e "      ${GREEN}✓${NC} npm packages installed"
 fi
 
 # ---- Build frontend ----
 echo -e "${CYAN}[3/3]${NC} Building frontend..."
-npm --prefix "$FRONTEND_DIR" run build --silent 2>&1
-echo -e "      ${GREEN}✓${NC} Build complete ($(du -sh "$FRONTEND_DIR/dist" 2>/dev/null | awk '{print $1}'))"
+if [ -d "$FRONTEND_DIR/dist" ]; then
+    echo -e "      ${GREEN}✓${NC} dist already exists, skipping build ($(du -sh "$FRONTEND_DIR/dist" 2>/dev/null | awk '{print $1}'))"
+else
+    npm --prefix "$FRONTEND_DIR" run build --silent 2>&1
+    echo -e "      ${GREEN}✓${NC} Build complete ($(du -sh "$FRONTEND_DIR/dist" 2>/dev/null | awk '{print $1}'))"
+fi
 
 # ---- Start backend ----
 echo ""

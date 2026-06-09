@@ -24,14 +24,18 @@ echo ""
 
 # Deps check
 echo -e "${CYAN}[1/3]${NC} Checking dependencies..."
-python3 -c "import fastapi, uvicorn" 2>/dev/null || pip install --break-system-packages -q -r "$PROJECT_DIR/backend/requirements.txt" 2>&1 | tail -1
-[ -d "$PROJECT_DIR/frontend/node_modules" ] || npm --prefix "$PROJECT_DIR/frontend" install --silent 2>&1 | tail -1
+python3 -c "import fastapi, uvicorn" 2>/dev/null || pip install --break-system-packages -q -r "$PROJECT_DIR/backend/requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1 | tail -1
+[ -d "$PROJECT_DIR/frontend/node_modules" ] || npm --prefix "$PROJECT_DIR/frontend" install --registry=https://registry.npmmirror.com --silent 2>&1 | tail -1
 echo -e "     ${GREEN}✓${NC} Dependencies ready"
 
 # Build
 echo -e "${CYAN}[2/3]${NC} Building frontend..."
-npm --prefix "$PROJECT_DIR/frontend" run build --silent 2>&1 | tail -1
-echo -e "     ${GREEN}✓${NC} Build complete"
+if [ -d "$PROJECT_DIR/frontend/dist" ]; then
+    echo -e "     ${GREEN}✓${NC} dist already exists, skipping build"
+else
+    npm --prefix "$PROJECT_DIR/frontend" run build --silent 2>&1 | tail -1
+    echo -e "     ${GREEN}✓${NC} Build complete"
+fi
 
 # Start
 echo -e "${CYAN}[3/3]${NC} Starting server..."
