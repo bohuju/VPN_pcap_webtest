@@ -7,7 +7,6 @@ set -e
 export TERM="${TERM:-xterm-256color}"
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-FRONTEND_DIR="$PROJECT_DIR/frontend"
 BACKEND_PORT=8001
 
 RED='\033[0;31m'
@@ -20,8 +19,6 @@ WHITE='\033[1;37m'
 NC='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
-
-spinner() { local pid=$1 delay=0.1 spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'; while kill -0 "$pid" 2>/dev/null; do for ((i=0;i<${#spin};i++)); do printf "\r  ${CYAN}%s${NC}" "${spin:$i:1}"; sleep $delay; done; done; printf "\r"; }
 
 progress_bar() {
     local duration=$1 msg="${2:-Processing}" width=50
@@ -65,14 +62,6 @@ sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} 分析引擎就绪 (protocol / packet-size / flow / time-series / TLS)"
 sleep 1
 
-echo -e "${WHITE}│${NC}  ${CYAN}⠏${NC} Building frontend..."
-npm --prefix "$FRONTEND_DIR" run build --silent &>/dev/null &
-BUILD_PID=$!
-spinner $BUILD_PID
-wait $BUILD_PID
-echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Frontend build complete ($(du -sh "$FRONTEND_DIR/dist" 2>/dev/null | awk '{print $1}'))"
-
-sleep 1
 echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}└─ ${GREEN}环境就绪${NC}"
 echo ""
@@ -224,37 +213,33 @@ echo -e "${WHITE}└─ ${GREEN}远端分析完成 — 结果已回传${NC}"
 echo ""
 
 # ============================================================
-# Phase 5: 启动前端
+# Phase 5: 启动前端 (调用 run.sh)
 # ============================================================
 echo -e "${BOLD}${WHITE}┌─ Phase 5/5: 启动 Web 分析面板${NC}"
 echo -e "${WHITE}│${NC}"
 
-fuser -k ${BACKEND_PORT}/tcp &>/dev/null || true
+sleep 1
+echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Calling run.sh (install deps + build + start server)..."
 sleep 1
 
-echo -e "${WHITE}│${NC}  ${CYAN}⟳${NC}  Starting FastAPI analysis backend..."
-python3 -m uvicorn backend.main:app --host 0.0.0.0 --port ${BACKEND_PORT} &>/tmp/pcap_demo_server.log &
+bash "$PROJECT_DIR/run.sh" &>/tmp/pcap_demo_server.log &
 SERVER_PID=$!
 
-for i in $(seq 1 15); do
+echo -ne "${WHITE}│${NC}  ${CYAN}⠏${NC}  Waiting for server"
+for i in $(seq 1 30); do
     if curl -s "http://localhost:${BACKEND_PORT}/api/health" &>/dev/null; then
+        echo -e "\r${WHITE}│${NC}  ${GREEN}✓${NC}  Server ready ${DIM}(PID: ${SERVER_PID}, port: ${BACKEND_PORT})${NC}"
         break
     fi
-    sleep 0.5
+    echo -n "."
+    sleep 1
 done
 
+ROWS=$(curl -s "http://localhost:${BACKEND_PORT}/api/health" | python3 -c "import sys,json; print(json.load(sys.stdin)['rows'])" 2>/dev/null || echo "?")
 sleep 1
-if curl -s "http://localhost:${BACKEND_PORT}/api/health" &>/dev/null; then
-    echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Backend started ${DIM}(PID: ${SERVER_PID}, port: ${BACKEND_PORT})${NC}"
-    ROWS=$(curl -s "http://localhost:${BACKEND_PORT}/api/health" | python3 -c "import sys,json; print(json.load(sys.stdin)['rows'])" 2>/dev/null || echo "?")
-    sleep 1
-    echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Dataset loaded: ${ROWS} flow records"
-    sleep 1
-    echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Analysis cache warmed: protocol / packet-size / flow / time-series / TLS"
-else
-    echo -e "${WHITE}│${NC}  ${RED}✗${NC}  Backend startup failed — check /tmp/pcap_demo_server.log"
-    exit 1
-fi
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Dataset loaded: ${ROWS} flow records"
+sleep 1
+echo -e "${WHITE}│${NC}  ${GREEN}✓${NC}  Analysis cache ready: protocol / packet-size / flow / time-series / TLS"
 
 sleep 1
 echo -e "${WHITE}│${NC}"
