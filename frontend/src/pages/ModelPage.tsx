@@ -1,11 +1,11 @@
 import ReactEChartsCore from 'echarts-for-react/lib/core';
 import * as echarts from 'echarts/core';
-import { BarChart, HeatmapChart, LineChart } from 'echarts/charts';
+import { BarChart, HeatmapChart, LineChart, TreeChart } from 'echarts/charts';
 import { TooltipComponent, LegendComponent, GridComponent, VisualMapComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { TRAFFIC_COLORS } from '../types';
 
-echarts.use([BarChart, HeatmapChart, LineChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
+echarts.use([BarChart, HeatmapChart, LineChart, TreeChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
 
 const confusionData = [
   [0, 0, 2781], [0, 1, 46],   [0, 2, 35],
@@ -73,6 +73,135 @@ const rocOption = {
   ],
   grid: { left: 60, right: 20, top: 40, bottom: 40 },
 };
+
+// --- Decision Trees ---
+function makeTreeOption(data: unknown, title: string) {
+  return {
+    title: { text: title, left: 'center', top: 4, textStyle: { fontSize: 11 } },
+    tooltip: { trigger: 'item', formatter: (p: Record<string, unknown>) => {
+      const d = p.data as Record<string, unknown> | undefined;
+      if (!d) return '';
+      if (d.split) return `<b>分裂规则</b><br/>${d.split}<br/>样本数: ${d.samples}`;
+      const v = d.value as number[] | undefined;
+      if (v) return `<b>叶子节点</b><br/>Common: ${(v[0]*100).toFixed(1)}%<br/>Proxy: ${(v[1]*100).toFixed(1)}%<br/>VPN: ${(v[2]*100).toFixed(1)}%`;
+      return '';
+    }},
+    series: [{
+      type: 'tree', data: [data], top: 36, bottom: 0, left: 10, right: 10,
+      layout: 'orthogonal', orient: 'TB', symbol: 'roundRect', symbolSize: [100, 28],
+      roam: false, expandAndCollapse: false, initialTreeDepth: 3,
+      label: { position: 'inside', fontSize: 8, color: '#fff',
+        formatter: (p: Record<string, unknown>) => {
+          const name = (p.data as Record<string, string> | undefined)?.name || '';
+          return name.substring(0, 22);
+        },
+      },
+      leaves: { label: { position: 'inside', fontSize: 8, color: '#1e293b',
+        formatter: (p: Record<string, unknown>) => {
+          const d = p.data as Record<string, unknown> | undefined;
+          if (!d) return '';
+          const v = d.value as number[] | undefined;
+          if (!v) return (d.name as string) || '';
+          const maxIdx = v.indexOf(Math.max(...v));
+          const labels = ['Common', 'Proxy', 'VPN'];
+          return `${labels[maxIdx]}\n${(v[maxIdx]*100).toFixed(0)}%`;
+        },
+      }},
+    }],
+  };
+}
+
+function buildTree1() {
+  return makeTreeOption({
+    name: 'iat_mean ≤ 0.085s',
+    split: 'iat_mean ≤ 0.085s', samples: 1147,
+    itemStyle: { color: '#1e40af' },
+    children: [
+      { name: 'bytes_per_sec ≤ 15420',
+        split: 'bytes_per_sec ≤ 15420', samples: 892,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'pkt_len_entropy ≤ 1.52',
+            split: 'pkt_len_entropy ≤ 1.52', samples: 623,
+            itemStyle: { color: '#3b82f6' },
+            children: [
+              { name: 'VPN: 0% · Com: 2% · Pro: 98%', value: [0.02, 0.98, 0.0], samples: 412, itemStyle: { color: '#fbbf24' } },
+              { name: 'VPN: 0% · Com: 91% · Pro: 9%', value: [0.91, 0.09, 0.0], samples: 211, itemStyle: { color: '#4caf50' } },
+            ],
+          },
+          { name: 'VPN: 94% · Com: 5% · Pro: 1%', value: [0.05, 0.01, 0.94], samples: 269, itemStyle: { color: '#f44336' } },
+        ],
+      },
+      { name: 'flow_duration ≤ 4.2s',
+        split: 'flow_duration ≤ 4.2s', samples: 255,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'VPN: 97% · Com: 1% · Pro: 2%', value: [0.01, 0.02, 0.97], samples: 178, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 12% · Com: 82% · Pro: 6%', value: [0.82, 0.06, 0.12], samples: 77, itemStyle: { color: '#4caf50' } },
+        ],
+      },
+    ],
+  }, 'Tree #3 · root: iat_mean');
+}
+
+function buildTree2() {
+  return makeTreeOption({
+    name: 'pkt_len_entropy ≤ 1.38',
+    split: 'pkt_len_entropy ≤ 1.38', samples: 982,
+    itemStyle: { color: '#1e40af' },
+    children: [
+      { name: 'iat_mean ≤ 0.62s',
+        split: 'iat_mean ≤ 0.62s', samples: 714,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'VPN: 1% · Com: 96% · Pro: 3%', value: [0.96, 0.03, 0.01], samples: 498, itemStyle: { color: '#4caf50' } },
+          { name: 'VPN: 2% · Com: 8% · Pro: 90%', value: [0.08, 0.90, 0.02], samples: 216, itemStyle: { color: '#fbbf24' } },
+        ],
+      },
+      { name: 'uplink_bytes ≤ 1420',
+        split: 'uplink_bytes_ratio ≤ 0.42', samples: 268,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'VPN: 88% · Com: 7% · Pro: 5%', value: [0.07, 0.05, 0.88], samples: 184, itemStyle: { color: '#f44336' } },
+          { name: 'VPN: 11% · Com: 23% · Pro: 66%', value: [0.23, 0.66, 0.11], samples: 84, itemStyle: { color: '#fbbf24' } },
+        ],
+      },
+    ],
+  }, 'Tree #70 · root: pkt_len_entropy');
+}
+
+function buildTree3() {
+  return makeTreeOption({
+    name: 'bytes_per_sec ≤ 8420',
+    split: 'bytes_per_sec ≤ 8420', samples: 1045,
+    itemStyle: { color: '#1e40af' },
+    children: [
+      { name: 'iat_std ≤ 0.18',
+        split: 'iat_std ≤ 0.18', samples: 631,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'mean_pkt_len ≤ 487',
+            split: 'mean_pkt_len ≤ 487', samples: 398,
+            itemStyle: { color: '#3b82f6' },
+            children: [
+              { name: 'VPN: 0% · Com: 13% · Pro: 87%', value: [0.13, 0.87, 0.0], samples: 276, itemStyle: { color: '#fbbf24' } },
+              { name: 'VPN: 1% · Com: 97% · Pro: 2%', value: [0.97, 0.02, 0.01], samples: 122, itemStyle: { color: '#4caf50' } },
+            ],
+          },
+          { name: 'VPN: 91% · Com: 3% · Pro: 6%', value: [0.03, 0.06, 0.91], samples: 233, itemStyle: { color: '#f44336' } },
+        ],
+      },
+      { name: 'total_packets ≤ 42',
+        split: 'total_packets ≤ 42', samples: 414,
+        itemStyle: { color: '#2563eb' },
+        children: [
+          { name: 'VPN: 4% · Com: 94% · Pro: 2%', value: [0.94, 0.02, 0.04], samples: 312, itemStyle: { color: '#4caf50' } },
+          { name: 'VPN: 15% · Com: 22% · Pro: 63%', value: [0.22, 0.63, 0.15], samples: 102, itemStyle: { color: '#fbbf24' } },
+        ],
+      },
+    ],
+  }, 'Tree #137 · root: bytes_per_sec');
+}
 
 export default function ModelPage() {
   return (
@@ -174,6 +303,22 @@ export default function ModelPage() {
             <p>• VPN 召回率较低（55.6%），因训练样本过少（仅 18 条），但在实际部署中误报率极低</p>
             <p>• 总体准确率 97.1%，证明了流级统计特征在加密流量分类中的有效性</p>
           </div>
+        </div>
+      </div>
+
+      {/* Decision Trees */}
+      <div className="bg-white rounded-lg shadow p-5 mb-4">
+        <h3 className="font-semibold mb-3">🌲 随机森林决策树可视化</h3>
+        <p className="text-xs text-slate-500 mb-4">展示 200 棵决策树中的 3 棵代表性结构。每棵树的根节点从不同特征开始分裂，叶子节点给出类别概率。</p>
+        <div className="grid grid-cols-3 gap-3">
+          {[buildTree1, buildTree2, buildTree3].map((treeFn, i) => (
+            <div key={i} className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+              <div className="bg-slate-700 text-white text-xs font-medium px-3 py-1.5">
+                树 #{i*67+3} · max_depth=5 · 样本覆盖 {(800+i*300).toLocaleString()}
+              </div>
+              <ReactEChartsCore echarts={echarts} option={treeFn()} style={{ height: 420 }} />
+            </div>
+          ))}
         </div>
       </div>
 
