@@ -1,12 +1,6 @@
-import ReactEChartsCore from 'echarts-for-react/lib/core';
-import * as echarts from 'echarts/core';
-import { BarChart, HeatmapChart } from 'echarts/charts';
-import { TooltipComponent, LegendComponent, GridComponent, VisualMapComponent } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
+import ReactECharts from 'echarts-for-react';
 import { usePredictionSamples } from '../hooks/useAnalysis';
 import { TRAFFIC_COLORS } from '../types';
-
-echarts.use([BarChart, HeatmapChart, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent, CanvasRenderer]);
 
 const cmData: number[][] = [
   [0,0,13750], [0,1,680],  [0,2,70],
@@ -85,10 +79,10 @@ export default function PredictionPage() {
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-white rounded-lg shadow p-4" style={{ height: 340 }}>
-          <ReactEChartsCore echarts={echarts} option={cmOption} style={{ height: '100%' }} />
+          <ReactECharts option={cmOption} style={{ height: '100%' }} />
         </div>
         <div className="bg-white rounded-lg shadow p-4" style={{ height: 340 }}>
-          <ReactEChartsCore echarts={echarts} option={metricsBarOption} style={{ height: '100%' }} />
+          <ReactECharts option={metricsBarOption} style={{ height: '100%' }} />
         </div>
       </div>
 

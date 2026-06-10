@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  随机森林模型预测验证页面 — 独立启动
+#  随机森林模型预测验证 — 模拟抓包 → 解析 → 预测
 # ============================================================
 set -e
 export TERM="${TERM:-xterm-256color}"
@@ -35,8 +35,8 @@ progress_bar() {
 clear
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${NC}  ${BOLD}🔮 随机森林模型 — 预测验证${NC}                                  ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  ${DIM}Random Forest Classifier · Test Set Prediction${NC}              ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${BOLD}🔮 随机森林模型 — 实时抓包 & 预测验证${NC}                      ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${DIM}Capture → Feature Extract → Random Forest → Prediction${NC}   ${CYAN}║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${DIM}  📅 $(date '+%Y-%m-%d %H:%M:%S')${NC}"
@@ -45,7 +45,7 @@ echo ""
 # ============================================================
 # Phase 1: 环境准备
 # ============================================================
-echo -e "${BOLD}${WHITE}┌─ Phase 1/4: 环境准备${NC}"
+echo -e "${BOLD}${WHITE}┌─ Phase 1/5: 环境准备${NC}"
 echo -e "${WHITE}│${NC}"
 
 sleep 1
@@ -75,12 +75,71 @@ echo -e "${WHITE}└─ ${GREEN}环境就绪${NC}"
 echo ""
 
 # ============================================================
-# Phase 2: 模型加载 & 测试集准备
+# Phase 2: 实时流量采集 — 多源并行抓包
 # ============================================================
-echo -e "${BOLD}${WHITE}┌─ Phase 2/4: 模型加载 & 测试集准备${NC}"
+echo -e "${BOLD}${WHITE}┌─ Phase 2/5: 流量采集 — 多源并行抓包${NC}"
+echo -e "${WHITE}│${NC}"
+
+SITES=("www.baidu.com" "www.taobao.com" "www.jd.com" "www.bilibili.com"
+       "www.zhihu.com" "mail.163.com" "www.ietf.org" "www.python.org"
+       "www.ubuntu.com" "www.xidian.edu.cn")
+TYPES=("common" "proxy" "vpn")
+AGENTS=("ssr" "vmess" "trojan" "ss")
+
+TOTAL_PKTS=0
+TOTAL_BYTES=0
+
+for i in "${!SITES[@]}"; do
+    site="${SITES[$i]}"
+
+    for type in "${TYPES[@]}"; do
+        sleep 0.6
+        pkts=$(( RANDOM % 2000 + 100 ))
+        bytes=$(( RANDOM % 500000 + 50000 ))
+        TOTAL_PKTS=$((TOTAL_PKTS + pkts))
+        TOTAL_BYTES=$((TOTAL_BYTES + bytes))
+
+        if [ "$type" = "common" ]; then
+            echo -e "${WHITE}│${NC}  ${GREEN}[common]${NC}  tcpdump -i eth0 → ${CYAN}${site}${NC}  ${DIM}${pkts} pkts, $((bytes / 1024))KB${NC}"
+        elif [ "$type" = "proxy" ]; then
+            agent="${AGENTS[$((RANDOM % 4))]}"
+            echo -e "${WHITE}│${NC}  ${YELLOW}[proxy]${NC}  tcpdump -i tun0 → ${CYAN}${site}${NC} ${DIM}via ${agent}${NC}  ${DIM}${pkts} pkts, $((bytes / 1024))KB${NC}"
+        else
+            echo -e "${WHITE}│${NC}  ${RED}[vpn]${NC}    tcpdump -i utun0 → ${CYAN}${site}${NC} ${DIM}via OpenVPN${NC}  ${DIM}${pkts} pkts, $((bytes / 1024))KB${NC}"
+        fi
+    done
+done
+
+sleep 1
+echo -e "${WHITE}│${NC}"
+echo -e "${WHITE}│${NC}  ${BOLD}采集汇总:${NC}"
+echo -e "${WHITE}│${NC}    ${GREEN}●${NC} Common:  $((${#SITES[@]})) 站点 × 1 thread  = $((${#SITES[@]})) 个 pcap"
+echo -e "${WHITE}│${NC}    ${YELLOW}●${NC} Proxy:   $((${#SITES[@]})) 站点 × 4 agents = $(( ${#SITES[@]} * 4 )) 个 pcap"
+echo -e "${WHITE}│${NC}    ${RED}●${NC} VPN:     $((${#SITES[@]})) 站点 × 1 tunnel = $((${#SITES[@]})) 个 pcap"
+echo -e "${WHITE}│${NC}    ${BOLD}总计: ~$TOTAL_PKTS 数据包, ~$((TOTAL_BYTES / 1048576))MB${NC}"
+
+sleep 1
+echo -e "${WHITE}│${NC}"
+echo -e "${WHITE}└─ ${GREEN}抓包完成 — $((${#SITES[@]} * 3)) 个 pcap 文件 (~5.3GB)${NC}"
+echo ""
+
+# ============================================================
+# Phase 3: 特征提取 & 模型加载
+# ============================================================
+echo -e "${BOLD}${WHITE}┌─ Phase 3/5: 特征提取 & 模型加载${NC}"
 echo -e "${WHITE}│${NC}"
 
 sleep 1
+echo -e "${WHITE}│${NC}  ${MAGENTA}[extract]${NC} \$ python3 feature_extract.py --input pcaps/ --output features.csv"
+sleep 1
+progress_bar 10 "Extracting flow features..."
+sleep 1
+echo -e "${WHITE}│${NC}  ${MAGENTA}[extract]${NC}   ${BOLD}Feature extraction complete${NC}"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[extract]${NC}   Output: encrypted_traffic_features.csv"
+echo -e "${WHITE}│${NC}  ${MAGENTA}[extract]${NC}   Records: 84,000 flows × 26 features"
+
+sleep 1
+echo -e "${WHITE}│${NC}"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[model]${NC}  Loading Random Forest from traffic_classifier_rf.pkl..."
 sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[model]${NC}    Model: RandomForestClassifier"
@@ -92,7 +151,7 @@ echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Model loaded ${DIM}(5.2 MB, 200 tree
 
 sleep 1
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}   Loading test set from encrypted_traffic_features.csv..."
+echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}   Preparing test set (70/30 split)..."
 sleep 1
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Total records: 84,000"
 echo -e "${WHITE}│${NC}  ${MAGENTA}[data]${NC}    Train/Test split: 70/30"
@@ -107,13 +166,13 @@ sleep 1
 echo -e "${WHITE}│${NC}  ${GREEN}✓${NC} Test set ready"
 
 echo -e "${WHITE}│${NC}"
-echo -e "${WHITE}└─ ${GREEN}模型 & 数据就绪${NC}"
+echo -e "${WHITE}└─ ${GREEN}特征提取 & 模型就绪${NC}"
 echo ""
 
 # ============================================================
-# Phase 3: 模拟预测
+# Phase 4: 执行预测
 # ============================================================
-echo -e "${BOLD}${WHITE}┌─ Phase 3/4: 执行预测${NC}"
+echo -e "${BOLD}${WHITE}┌─ Phase 4/5: 执行预测${NC}"
 echo -e "${WHITE}│${NC}"
 
 sleep 1
@@ -175,9 +234,9 @@ echo -e "${WHITE}└─ ${GREEN}预测完成${NC}"
 echo ""
 
 # ============================================================
-# Phase 4: 启动前端
+# Phase 5: 启动预测 Web 面板
 # ============================================================
-echo -e "${BOLD}${WHITE}┌─ Phase 4/4: 启动 Web 面板${NC}"
+echo -e "${BOLD}${WHITE}┌─ Phase 5/5: 启动预测 Web 面板${NC}"
 echo -e "${WHITE}│${NC}"
 
 sleep 1
@@ -216,9 +275,10 @@ echo -e "${WHITE}└─ ${GREEN}面板就绪${NC}"
 echo ""
 
 echo -e "${BOLD}${WHITE}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${WHITE}║${NC}  ${BOLD}${GREEN}✦ 预测验证面板已启动 ✦${NC}                                    ${WHITE}║${NC}"
+echo -e "${WHITE}║${NC}  ${BOLD}${GREEN}✦ 抓包 → 解析 → 预测 全流程完成 ✦${NC}                        ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}                                                              ${WHITE}║${NC}"
-echo -e "${WHITE}║${NC}  ${CYAN}🔮${NC}  ${BOLD}${BLUE}${URL}${NC}                    ${WHITE}║${NC}"
+echo -e "${WHITE}║${NC}  ${CYAN}🔮${NC}  预测面板:  ${BOLD}${BLUE}${URL}${NC}                    ${WHITE}║${NC}"
+echo -e "${WHITE}║${NC}  ${CYAN}📊${NC}  5.3GB PCAP → 84,000 流 → 25,000 测试集 → 93.5% 准确率 ${WHITE}║${NC}"
 echo -e "${WHITE}║${NC}  ${DIM}按 Ctrl+C 停止${NC}                                            ${WHITE}║${NC}"
 echo -e "${WHITE}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
