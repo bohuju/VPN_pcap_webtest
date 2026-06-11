@@ -11,8 +11,8 @@ export default function PacketSizePage() {
       <h2 className="text-xl font-bold mb-4">📦 包大小分析详情</h2>
       <InsightCard items={[
         { label: 'Common', content: '包大小分布广泛（熵 1.29），包含 ACK 小包、MTU 满包等多种尺寸，反映正常应用行为。' },
-        { label: 'Proxy', content: '包大小熵最高（1.48），代理加密封装后载荷更均匀，同时伴有大量控制信令包和重传。' },
-        { label: 'VPN', content: '标准差较小，VPN 隧道使用固定大小的封装帧，包大小集中在 MTU 附近和少量心跳小包。' },
+        { label: 'Proxy', content: '包大小分布最广泛（1.48），代理加密封装后载荷更均匀，同时伴有大量控制信令包和重传。' },
+        { label: 'VPN', content: '包大小分布较小，VPN 隧道使用固定大小的封装帧，包大小集中在 MTU 附近和少量心跳小包。' },
       ]} />
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="col-span-2">

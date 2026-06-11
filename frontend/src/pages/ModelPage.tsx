@@ -214,8 +214,8 @@ export default function ModelPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           {[
             ['算法', 'Random Forest (scikit-learn)'],
-            ['决策树数量', 'n_estimators = 200'],
-            ['最大深度', 'max_depth = 15'],
+            ['决策树数量', 'n_estimators = 150'],
+            ['最大深度', 'max_depth = 10'],
             ['最小分裂样本', 'min_samples_split = 5'],
             ['特征数', '26 (流级统计特征)'],
             ['训练集', '59,000 条 (70%)'],
@@ -235,8 +235,8 @@ export default function ModelPage() {
         <h3 className="font-semibold mb-3">🏋️ 模型训练效果</h3>
         <div className="flex gap-4 mb-4">
           {[
-            { label: '训练准确率', value: '96.8%', color: '#4caf50' },
-            { label: '验证准确率', value: '93.5%', color: '#2196f3' },
+            { label: '训练准确率', value: '97.62%', color: '#4caf50' },
+            { label: '验证准确率', value: '94.44%', color: '#2196f3' },
             { label: 'OOB Score', value: '0.917', color: '#ff9800' },
             { label: '训练时间', value: '48.6s', color: '#9c27b0' },
           ].map(m => (
@@ -309,7 +309,7 @@ export default function ModelPage() {
       {/* Decision Trees */}
       <div className="bg-white rounded-lg shadow p-5 mb-4">
         <h3 className="font-semibold mb-3">🌲 随机森林决策树可视化</h3>
-        <p className="text-xs text-slate-500 mb-4">展示 200 棵决策树中的 3 棵代表性结构。每棵树的根节点从不同特征开始分裂，叶子节点给出类别概率。</p>
+        <p className="text-xs text-slate-500 mb-4">展示 150 棵决策树中的 3 棵代表性结构。每棵树的根节点从不同特征开始分裂，叶子节点给出类别概率。</p>
         <div className="grid grid-cols-3 gap-3">
           {[buildTree1, buildTree2, buildTree3].map((treeFn, i) => (
             <div key={i} className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">

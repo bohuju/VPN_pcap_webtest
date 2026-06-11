@@ -9,9 +9,8 @@ import {
   Radio,
   Play,
   RotateCcw,
-  Wifi,
+  Network,
   HardDrive,
-  Shield,
   BrainCircuit,
 } from 'lucide-react';
 
@@ -53,7 +52,6 @@ const MODULE_X = 648;
 const MODULE_START_Y = 214;
 const MODULE_W = 72;
 const MODULE_H = 28;
-const MODULE_GAP = 8;
 
 // Path definitions for data packet animation
 const PATHS: Record<
@@ -146,7 +144,7 @@ export default function NetworkTopologyPage() {
   const [demo, setDemo] = useState<DemoState>({ phase: 'idle', step: 0 });
   const [packets, setPackets] = useState<PacketDot[]>([]);
   const [highlightCapturePath, setHighlightCapturePath] = useState(false);
-  const [modulesLit, setModulesLit] = useState([false, false, false]); // probe, lcm, capture
+  const [modulesLit, setModulesLit] = useState(false); // probe
   const [serverCaptureActive, setServerCaptureActive] = useState(false);
   const [llmActive, setLlmActive] = useState(false);
   const [hoveredNode, setHoveredNode] = useState<{
@@ -169,9 +167,7 @@ export default function NetworkTopologyPage() {
     sw2: 'SW2 — 服务器侧交换机',
     sta: 'STA / Client — 客户端测试终端，接收 LLM 分析结果',
     server: 'Server — 采集与处理服务器，运行 LLM Agent',
-    probe: 'Probe — 链路探测，监控 Gateway↔Server 链路状态',
-    lcm: 'LCM — 链路/生命周期管理模块',
-    capture: 'Capture — 采集 Gateway 与 Server 通信路径上的数据',
+    probe: 'Probe — 链路探测与流量采集，监控 Gateway↔Server 链路状态',
     'llm-agent': 'LLM Agent — 分析采集到的数据，生成结果回传 STA',
     dataset: 'Dataset (data 5.8GB) — Server 上存放的数据集，不是网络节点',
     'server-capture': 'Server Local Capture — 服务器本地抓取的额外数据',
@@ -233,7 +229,7 @@ export default function NetworkTopologyPage() {
     setDemo({ phase: 'idle', step: 0 });
     setPackets([]);
     setHighlightCapturePath(false);
-    setModulesLit([false, false, false]);
+    setModulesLit(false);
     setServerCaptureActive(false);
     setLlmActive(false);
     packetIdRef.current = 0;
@@ -249,7 +245,7 @@ export default function NetworkTopologyPage() {
     setDemo({ phase: 'running', step: 0 });
     setPackets([]);
     setHighlightCapturePath(false);
-    setModulesLit([false, false, false]);
+    setModulesLit(false);
     setServerCaptureActive(false);
     setLlmActive(false);
     packetIdRef.current = 0;
@@ -262,7 +258,7 @@ export default function NetworkTopologyPage() {
     addPackets('gateway-sw1', 6, '#22d3ee', 'circle', 4, 800);
     addPackets('gateway-sw2', 6, '#f59e0b', 'circle', 4, 800);
 
-    // ── Phase 2: SW2→Server capture + Probe/LCM/Capture light up ──
+    // ── Phase 2: SW2→Server capture + Probe lights up ──
     setTimeout(
       () => {
         setDemo((d) => (d.phase === 'running' ? { ...d, step: 2 } : d));
@@ -272,11 +268,7 @@ export default function NetworkTopologyPage() {
     );
     addPackets('sw2-server', 5, '#c084fc', 'circle', 4, 1600);
     // Probe
-    setTimeout(() => setModulesLit((m) => [true, m[1], m[2]]), 1900);
-    // LCM
-    setTimeout(() => setModulesLit((m) => [m[0], true, m[2]]), 2150);
-    // Capture
-    setTimeout(() => setModulesLit((m) => [m[0], m[1], true]), 2400);
+    setTimeout(() => setModulesLit(true), 1900);
 
     // ── Phase 3: LLM Agent analysis + Server Local Capture ──
     setTimeout(
@@ -381,7 +373,7 @@ export default function NetworkTopologyPage() {
     switch (demo.step) {
       case 0: return 'Step 1/5 — Traffic enters Gateway';
       case 1: return 'Step 2/5 — Gateway distributes to switches';
-      case 2: return 'Step 3/5 — Probe → LCM → Capture observing traffic';
+      case 2: return 'Step 3/5 — Probe observing traffic';
       case 3: return 'Step 4/5 — LLM Agent analyzing captured data';
       case 4: return 'Step 5/5 — Results sent back to STA';
       default: return 'Running';
@@ -389,10 +381,6 @@ export default function NetworkTopologyPage() {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
-
-  const gatewayToSw2MidX = (NODES.gateway.x + 30 + NODES.sw2.x) / 2;
-  const gatewayToSw2MidY =
-    (NODES.gateway.y + NODES.gateway.r + NODES.sw2.y - NODES.sw2.r) / 2;
 
   return (
     <div className="max-w-6xl mx-auto px-2 sm:px-0">
@@ -403,7 +391,7 @@ export default function NetworkTopologyPage() {
           Network Capture Topology Demo
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-          Gateway-to-Server traffic is observed by Probe / LCM / Capture,
+          Gateway-to-Server traffic is observed by Probe,
           analyzed by LLM Agent, and results are returned to STA.
         </p>
       </div>
@@ -603,43 +591,6 @@ export default function NetworkTopologyPage() {
               </rect>
             )}
 
-            {/* ── Tap line: Gateway→SW2 line → Probe/LCM/Capture stack ── */}
-            {/* Horizontal indicator from the link to the modules */}
-            <line
-              x1={gatewayToSw2MidX}
-              y1={gatewayToSw2MidY}
-              x2={MODULE_X - 4}
-              y2={(MODULE_START_Y + MODULE_H + MODULE_GAP) / 2 + MODULE_START_Y}
-              stroke={highlightCapturePath ? '#f59e0b' : '#334155'}
-              strokeWidth={1.2}
-              strokeDasharray="4,3"
-              className="transition-all duration-500"
-            />
-            {/* Small perpendicular tick on the link line */}
-            <line
-              x1={gatewayToSw2MidX - 6}
-              y1={gatewayToSw2MidY - 8}
-              x2={gatewayToSw2MidX + 6}
-              y2={gatewayToSw2MidY + 8}
-              stroke={highlightCapturePath ? '#f59e0b' : '#334155'}
-              strokeWidth={1.5}
-              className="transition-all duration-500"
-            />
-
-            {/* ── Path label: "capture path" ────────────────────────── */}
-            <text
-              x={gatewayToSw2MidX + 20}
-              y={gatewayToSw2MidY - 10}
-              textAnchor="middle"
-              fill={highlightCapturePath ? '#f59e0b' : '#64748b'}
-              fontSize="9"
-              fontWeight={600}
-              fontFamily="system-ui, sans-serif"
-              className="transition-colors duration-500"
-            >
-              capture path
-            </text>
-
             {/* ══════════════════════════════════════════════════════
                 ANIMATED PACKETS
                ══════════════════════════════════════════════════════ */}
@@ -648,7 +599,7 @@ export default function NetworkTopologyPage() {
             ))}
 
             {/* ══════════════════════════════════════════════════════
-                PROBE / LCM / CAPTURE MODULES (right of capture path)
+                PROBE MODULE (right of capture path)
                ══════════════════════════════════════════════════════ */}
 
             {/* Probe */}
@@ -663,10 +614,10 @@ export default function NetworkTopologyPage() {
                 width={MODULE_W}
                 height={MODULE_H}
                 rx={6}
-                fill={modulesLit[0] ? '#fef3c7' : '#1e293b'}
-                stroke={modulesLit[0] ? '#f59e0b' : '#475569'}
-                strokeWidth={modulesLit[0] ? 1.5 : 1}
-                filter={modulesLit[0] ? 'url(#glow-orange)' : undefined}
+                fill={modulesLit ? '#fef3c7' : '#1e293b'}
+                stroke={modulesLit ? '#f59e0b' : '#475569'}
+                strokeWidth={modulesLit ? 1.5 : 1}
+                filter={modulesLit ? 'url(#glow-orange)' : undefined}
                 className="transition-all duration-400"
               />
               <Radio
@@ -674,13 +625,13 @@ export default function NetworkTopologyPage() {
                 y={MODULE_START_Y + 6}
                 width={14}
                 height={14}
-                color={modulesLit[0] ? '#f59e0b' : '#64748b'}
+                color={modulesLit ? '#f59e0b' : '#64748b'}
                 className="transition-colors duration-400"
               />
               <text
                 x={MODULE_X + 24}
                 y={MODULE_START_Y + 18}
-                fill={modulesLit[0] ? '#92400e' : '#cbd5e1'}
+                fill={modulesLit ? '#92400e' : '#cbd5e1'}
                 fontSize="11"
                 fontWeight={600}
                 fontFamily="system-ui, sans-serif"
@@ -689,112 +640,6 @@ export default function NetworkTopologyPage() {
                 Probe
               </text>
             </g>
-
-            {/* LCM */}
-            <g
-              className="cursor-default"
-              onMouseEnter={() =>
-                handleNodeEnter(
-                  'lcm',
-                  MODULE_X + MODULE_W / 2,
-                  MODULE_START_Y + MODULE_H + MODULE_GAP + MODULE_H / 2,
-                )
-              }
-              onMouseLeave={handleNodeLeave}
-            >
-              <rect
-                x={MODULE_X}
-                y={MODULE_START_Y + MODULE_H + MODULE_GAP}
-                width={MODULE_W}
-                height={MODULE_H}
-                rx={6}
-                fill={modulesLit[1] ? '#fef3c7' : '#1e293b'}
-                stroke={modulesLit[1] ? '#f59e0b' : '#475569'}
-                strokeWidth={modulesLit[1] ? 1.5 : 1}
-                filter={modulesLit[1] ? 'url(#glow-orange)' : undefined}
-                className="transition-all duration-400"
-              />
-              <Shield
-                x={MODULE_X + 6}
-                y={MODULE_START_Y + MODULE_H + MODULE_GAP + 6}
-                width={14}
-                height={14}
-                color={modulesLit[1] ? '#f59e0b' : '#64748b'}
-                className="transition-colors duration-400"
-              />
-              <text
-                x={MODULE_X + 24}
-                y={MODULE_START_Y + MODULE_H + MODULE_GAP + 18}
-                fill={modulesLit[1] ? '#92400e' : '#cbd5e1'}
-                fontSize="11"
-                fontWeight={600}
-                fontFamily="system-ui, sans-serif"
-                className="transition-colors duration-400"
-              >
-                LCM
-              </text>
-            </g>
-
-            {/* Capture */}
-            <g
-              className="cursor-default"
-              onMouseEnter={() =>
-                handleNodeEnter(
-                  'capture',
-                  MODULE_X + MODULE_W / 2,
-                  MODULE_START_Y + (MODULE_H + MODULE_GAP) * 2 + MODULE_H / 2,
-                )
-              }
-              onMouseLeave={handleNodeLeave}
-            >
-              <rect
-                x={MODULE_X}
-                y={MODULE_START_Y + (MODULE_H + MODULE_GAP) * 2}
-                width={MODULE_W}
-                height={MODULE_H}
-                rx={6}
-                fill={modulesLit[2] ? '#fef3c7' : '#1e293b'}
-                stroke={modulesLit[2] ? '#f59e0b' : '#475569'}
-                strokeWidth={modulesLit[2] ? 1.5 : 1}
-                filter={modulesLit[2] ? 'url(#glow-orange)' : undefined}
-                className="transition-all duration-400"
-              />
-              <Activity
-                x={MODULE_X + 6}
-                y={MODULE_START_Y + (MODULE_H + MODULE_GAP) * 2 + 6}
-                width={14}
-                height={14}
-                color={modulesLit[2] ? '#f59e0b' : '#64748b'}
-                className="transition-colors duration-400"
-              />
-              <text
-                x={MODULE_X + 24}
-                y={MODULE_START_Y + (MODULE_H + MODULE_GAP) * 2 + 18}
-                fill={modulesLit[2] ? '#92400e' : '#cbd5e1'}
-                fontSize="11"
-                fontWeight={600}
-                fontFamily="system-ui, sans-serif"
-                className="transition-colors duration-400"
-              >
-                Capture
-              </text>
-            </g>
-
-            {/* ── Module stack label ────────────────────────────────── */}
-            {highlightCapturePath && (
-              <text
-                x={MODULE_X + MODULE_W / 2}
-                y={MODULE_START_Y - 8}
-                textAnchor="middle"
-                fill="#f59e0b"
-                fontSize="9"
-                fontWeight={600}
-                fontFamily="system-ui, sans-serif"
-                opacity={0.8}
-              >
-                TAP
-              </text>
-            )}
 
             {/* ══════════════════════════════════════════════════════
                 NODES
@@ -905,7 +750,7 @@ export default function NetworkTopologyPage() {
                 strokeWidth={2}
                 className="transition-all duration-500"
               />
-              <Wifi
+              <Network
                 x={NODES.sw1.x - 14}
                 y={NODES.sw1.y - 14}
                 width={28}
@@ -944,7 +789,7 @@ export default function NetworkTopologyPage() {
                 strokeWidth={2}
                 className="transition-all duration-500"
               />
-              <Wifi
+              <Network
                 x={NODES.sw2.x - 14}
                 y={NODES.sw2.y - 14}
                 width={28}
@@ -1423,7 +1268,7 @@ export default function NetworkTopologyPage() {
               >
                 Server
               </text>
-              {/* Capture modules */}
+              {/* Capture module */}
               <rect
                 x={11}
                 y={94}
@@ -1441,7 +1286,7 @@ export default function NetworkTopologyPage() {
                 fontSize="9"
                 fontFamily="system-ui, sans-serif"
               >
-                Probe / LCM / Capture
+                Probe
               </text>
               {/* LLM Agent */}
               <rect
@@ -1505,7 +1350,7 @@ export default function NetworkTopologyPage() {
       {/* ── Footer ─────────────────────────────────────────────────── */}
       <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 gap-1">
         <span>
-          Hover over nodes for details · Capture path: Gateway → SW2 → Server
+          Hover over nodes for details · Probe monitors Gateway → SW2 → Server
         </span>
         <span className="flex items-center gap-1">
           <HardDrive className="w-3 h-3 shrink-0" />

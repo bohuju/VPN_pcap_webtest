@@ -46,7 +46,7 @@ export default function PredictionPage() {
 
       <div className="grid grid-cols-4 gap-4 mb-4">
         {[
-          ['测试样本总数', '25,000', '5.3GB PCAP 真实采集'],
+          ['测试样本总数(包)', '25,000', ' PCAP 真实采集'],
           ['总体准确率', '93.5%', '23,365 / 25,000 正确'],
           ['平均置信度', '0.847', '正确预测的平均概率'],
           ['推理耗时', '3.2s', '全量测试集预测'],
@@ -100,8 +100,8 @@ export default function PredictionPage() {
                     <th className="text-left py-2 px-3">流标识</th>
                     <th className="text-center py-2 px-3">协议</th>
                     <th className="text-right py-2 px-3">包长均值</th>
-                    <th className="text-right py-2 px-3">IAT (s)</th>
-                    <th className="text-right py-2 px-3">熵</th>
+                    <th className="text-right py-2 px-3">包到达间隔 (s)</th>
+                    <th className="text-right py-2 px-3">包大小分布</th>
                     <th className="text-center py-2 px-3">真实标签</th>
                     <th className="text-center py-2 px-3">预测标签</th>
                     <th className="text-right py-2 px-3">置信度</th>
