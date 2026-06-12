@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import type { ProtocolData, PacketSizeData, FlowData, TimeSeriesData, TlsData, PacketTableData } from '../types';
+import type { ProtocolData, PacketSizeData, FlowData, TimeSeriesData, TlsData, PacketTableData, CaptureSession } from '../types';
 
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -28,6 +28,13 @@ export function useTlsData() {
 
 export function usePredictionSamples() {
   return useSWR('/api/prediction-samples', fetcher);
+}
+
+export function useCaptureSession() {
+  return useSWR<CaptureSession>('/api/capture-session', fetcher, {
+    refreshInterval: 2000,
+    dedupingInterval: 1500,
+  });
 }
 
 export function usePacketTable(type: string, page: number, size: number) {

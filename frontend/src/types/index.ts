@@ -135,3 +135,51 @@ export const TRAFFIC_LABELS: Record<TrafficType, string> = {
 };
 
 export const TRAFFIC_TYPES: TrafficType[] = ['common', 'proxy', 'vpn'];
+
+// === /api/capture-session response ===
+export interface CapturePrediction {
+  id: number;
+  flow: string;
+  proto: string;
+  pkt_len: string;
+  iat: string;
+  entropy: string;
+  trueLabel: string;
+  predLabel: string;
+  prob: number;
+  correct: boolean;
+}
+
+export interface ProtocolHistoryPoint {
+  time: number;
+  common: number;
+  proxy: number;
+  vpn: number;
+}
+
+export interface ConfidenceBin {
+  range: string;
+  count: number;
+}
+
+export interface MisclassCounts {
+  common_to_proxy: number;
+  proxy_to_common: number;
+  vpn_related: number;
+}
+
+export interface CaptureSession {
+  total_packets: number;
+  packet_rate: number;
+  current_stage: number;
+  stage_thresholds: number[];
+  next_threshold: number;
+  elapsed_seconds: number;
+  stage_advanced: boolean;
+  protocol_history: ProtocolHistoryPoint[];
+  confidence_distribution: ConfidenceBin[];
+  new_predictions: CapturePrediction[];
+  recent_predictions: CapturePrediction[];
+  misclass: MisclassCounts;
+  accuracy: number;
+}

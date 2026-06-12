@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/tls', label: '🔐 TLS 特征', end: false },
   { to: '/data-table', label: '📋 详细数据表', end: false },
   { to: '/model', label: '🧠 随机森林模型', end: false },
+  { to: '/prediction', label: '🔮 实时预测', end: false },
   { to: '/topology', label: '🔗 网络采集拓扑', end: false },
 ];
 
